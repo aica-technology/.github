@@ -5,8 +5,8 @@
 6. Add any supporting resources (screenshots, test results, etc)
 7. Help the reviewer by suggestion the method and estimated time to review
 8. If applicable, make a checklist of tasks that should be completed before merging
-9.  If applicable, link related issues (blocked by / blocks)
-10. Tag reviewers
+9. If applicable, mention related issues (blocked by / blocks)
+10. Post creation actions: tag reviewers and link the PR to its parent issue under the Development section
 -->
 
 ## Description
