@@ -1,0 +1,36 @@
+name: Write File
+
+on:
+  workflow_call:
+    inputs:
+      content:
+        description: 'The content to be written to file'
+        required: true
+        type: string
+      filepath:
+        description: 'The path of the file'
+        required: true
+        type: string
+      branch:
+        description: 'The name of the branch to commit to'
+        required: true
+        type: string
+
+jobs:
+  write-file:
+    runs-on: ubuntu-latest
+    name: Write file
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Write file
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email github-actions[bot]@users.noreply.github.com
+          git reset --hard HEAD && git fetch origin ${{ inputs.branch }} || exit 1
+          git checkout ${{ inputs.branch }} && git rebase origin/main || exit 1
+          echo ${{ inputs.content }} > ${{ inputs.filepath }}
+          git add ${{ inputs.filepath }}
+          git commit -m "Write file: ${{ inputs.filepath }}" && git push -f
+        shell: bash
