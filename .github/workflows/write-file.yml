@@ -26,8 +26,8 @@ jobs:
 
       - name: Write file
         run: |
-          git config user.name github-actions
-          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git config user.name github-actions[bot]
+          git config user.email github-actions[bot]@users.noreply.github.com
           git reset --hard HEAD && git fetch origin ${{ inputs.branch }} || exit 1
           git checkout ${{ inputs.branch }} && git rebase origin/main || exit 1
           echo ${{ inputs.content }} > ${{ inputs.filepath }}
