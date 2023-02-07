@@ -1,0 +1,107 @@
+name: Build and Push (multi-arch)
+
+on:
+  workflow_call:
+    inputs:
+      image_name:
+        description: 'The name of the image (for example "aica-technology/image-name")'
+        required: true
+        type: string
+      image_tag:
+        description: 'The tag of the image (for example "latest")'
+        required: true
+        type: string
+      build_context_path:
+        description: 'Path to the directory that specifies the Docker build context'
+        required: true
+        type: string
+        default: '.'
+      dockerfile_path:
+        description: 'Path of the Dockerfile'
+        required: true
+        type: string
+        default: 'Dockerfile'
+      architecture:
+        description: 'The desired architecture [`amd64` or `amd64 & arm64`]'
+        required: true
+        type: string
+        default: 'amd64 & arm64'
+      build_flags:
+        description: 'Any build flags that should be forwarded to the build process as an array'
+        required: false
+        type: string
+      artifact_name:
+        description: 'Name of the artifact to be downloaded'
+        required: false
+        type: string
+      artifact_path:
+        description: 'Path where the artifact should be downloaded to'
+        required: false
+        type: string
+    secrets:
+      token:
+        description: 'The GitHub token passed from the caller workflow'
+        required: true
+    outputs:
+      image_hash:
+        description: 'The SHA of the pushed image'
+        value: ${{ jobs.build-publish.outputs.image_hash }}
+
+jobs:
+  build-publish:
+    runs-on: ubuntu-latest
+    name: Build and push image
+    outputs:
+      image_hash: ${{ steps.build-push.outputs.sha }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Download artifact
+        if: inputs.artifact_name
+        uses: actions/download-artifact@v3
+        with:
+          name: ${{ inputs.artifact_name }}
+          path: ${{ inputs.artifact_path }}
+
+      - name: Parse inputs
+        run: |
+          ARCH="${{ inputs.architecture }}"
+          ARCH_FLAGS=()
+          if [[ ${ARCH} == "amd64" ]]; then
+            ARCH_FLAGS+=(--platform=linux/amd64)
+          elif [[ ${ARCH} == "amd64 & arm64" ]]; then
+            ARCH_FLAGS+=(--platform=linux/arm64,linux/amd64)
+          else
+            echo "::error::Invalid architecture. Choose between 'amd64 & arm64' and 'amd64'."
+            exit 1
+          fi
+          echo "ARCH_FLAGS=${ARCH_FLAGS}" >> $GITHUB_ENV
+        shell: bash
+
+      - name: Set up QEMU
+        if: inputs.architecture == 'amd64 & arm64'
+        uses: docker/setup-qemu-action@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Login to GitHub Package Registry
+        run: echo "${{ secrets.token }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+        shell: bash
+
+      - id: build-push
+        name: Build and push image
+        run: |
+          IMAGE=${{ inputs.image_name }}:${{ inputs.image_tag }}
+          if [[ "${IMAGE:0:8}" != "ghcr.io/" ]]; then
+            IMAGE=ghcr.io/${IMAGE}
+          fi
+          docker buildx build --file ${{ inputs.dockerfile_path }} \
+            ${ARCH_FLAGS[@]} ${{ inputs.build_flags }} \
+            --push --tag ${IMAGE} \
+            --provenance=false --sbom=false \
+            ${{ inputs.build_context_path }}
+          SHA=$(docker buildx imagetools inspect ${IMAGE} | grep Digest)
+          echo "sha=${SHA##*sha256:}" >> $GITHUB_OUTPUT
+        shell: bash
