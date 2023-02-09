@@ -21,11 +21,11 @@ on:
         required: true
         type: string
         default: 'Dockerfile'
-      architecture:
-        description: 'The desired architecture [`amd64` or `amd64 & arm64`]'
+      architectures:
+        description: 'The desired architecture(s) as comma-separated list (for example "amd64,arm64")'
         required: true
         type: string
-        default: 'amd64 & arm64'
+        default: 'amd64,arm64'
       build_flags:
         description: 'Any build flags that should be forwarded to the build process as an array'
         required: false
@@ -66,14 +66,16 @@ jobs:
 
       - name: Parse inputs
         run: |
-          ARCH="${{ inputs.architecture }}"
+          ARCH="${{ inputs.architectures }}"
           ARCH_FLAGS=()
           if [[ ${ARCH} == "amd64" ]]; then
             ARCH_FLAGS+=(--platform=linux/amd64)
-          elif [[ ${ARCH} == "amd64 & arm64" ]]; then
+          elif [[ ${ARCH} == "arm64" ]]; then
+            ARCH_FLAGS+=(--platform=linux/arm64)
+          elif [[ ${ARCH} == "amd64,arm64" ]]; then
             ARCH_FLAGS+=(--platform=linux/arm64,linux/amd64)
           else
-            echo "::error::Invalid architecture. Choose between 'amd64 & arm64' and 'amd64'."
+            echo "::error::Invalid architecture. Only amd64 and arm64 are supported."
             exit 1
           fi
           echo "ARCH_FLAGS=${ARCH_FLAGS}" >> $GITHUB_ENV
