@@ -28,8 +28,7 @@ jobs:
         run: |
           git config user.name github-actions[bot]
           git config user.email github-actions[bot]@users.noreply.github.com
-          git reset --hard HEAD && git fetch origin ${{ inputs.branch }} || exit 1
-          git checkout ${{ inputs.branch }} && git rebase origin/main || exit 1
+          git reset --hard HEAD && git fetch origin ${{ inputs.branch }} && git checkout ${{ inputs.branch }} || exit 1
           echo ${{ inputs.content }} > ${{ inputs.filepath }}
           git add ${{ inputs.filepath }}
           git commit -m "Write file: ${{ inputs.filepath }}" && git push -f
