@@ -37,6 +37,10 @@ on:
         description: 'Path where the artifact should be downloaded to'
         required: false
         type: string
+      checkout_ref:
+        description: 'The reference for the repository checkout'
+        required: false
+        type: string
     secrets:
       token:
         description: 'The GitHub token passed from the caller workflow'
@@ -53,7 +57,14 @@ jobs:
     outputs:
       image_hash: ${{ steps.build-push.outputs.sha }}
     steps:
+      - name: Checkout repository with ref
+        if: inputs.checkout_ref != ''
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ inputs.checkout_ref }}
+
       - name: Checkout repository
+        if: inputs.checkout_ref == ''
         uses: actions/checkout@v3
 
       - name: Download artifact
