@@ -93,6 +93,6 @@ jobs:
             --platform=${{ inputs.platforms }} ${{ inputs.build_flags }} \
             --push --provenance=false --sbom=false ${IMAGES[@]} \
             ${{ inputs.build_context_path }}
-          SHA=$(docker buildx imagetools inspect ${IMAGE} | grep Digest)
+          SHA=$(docker buildx imagetools inspect ${IMAGE}:${TAG} | grep Digest)
           echo "sha=${SHA##*sha256:}" >> $GITHUB_OUTPUT
         shell: bash
