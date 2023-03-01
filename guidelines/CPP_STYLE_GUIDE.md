@@ -6,10 +6,7 @@
 * * [General naming](#general-naming)
 * * [Format and whitespace](#format-and-whitespace)
 * [Automatic formatting](#automatic-formatting)
-* * [clang-format](#clang-format-installation-and-usage)
 * * [CLion](#clion)
-* * [Visual Studio Code](#visual-studio-code)
-* * [Sublime Text](#sublime-text)
 
 
 ## Foreword 
@@ -197,20 +194,14 @@ Prefer smart pointers to raw pointers whenever possible.
 
 ## Automatic formatting
 
-While it is useful to internalize the rules of this style guide while writing your code, it would be cumbersome and unrealistic to check every line against every rule manually. Fortunately, the majority of the formatting rules can be applied to your code automatically. By configuring your development environment to automatically format your code (for example, format on save), you can ensure that each new addition you make will conform to the lab standard without any effort on your part. 
-
-Some files have been provided to help automatically reformat your code according to the AICA style. Use the AICA style directly within your code editor by importing the [IntelliJ IDEA code style XML](https://github.com/epfl-AICA/wiki/blob/master/files/AICA%20IntelliJ%20IDEA%20CPP%20Code%20Style.xml). Alternatively, post-format your code using your editor or the `clang-format` command-line tool with the [clang-format-AICA file](https://github.com/epfl-AICA/wiki/blob/master/files/clang-format-AICA).
-
-Follow the setup instructions below and within less than 5 minutes, your favourite code editor will automatically format your code in the future.
-
-_(Instructions written for Ubuntu 18.04)_
+While it is useful to internalize the rules of this style guide while writing your code, it is better to apply the formatting automatically.
 
 ### CLion
 Download the [IntelliJ IDEA code style XML file](./AICA_IDEA_CPP_STYLE.xml) from this repository.
 
-In CLion, go to `File` &rarr; `Settings` &rarr; `Editor` &rarr; `Code Style`. Then, under `Scheme`, click on `Show Scheme Actions` and then `Import Scheme...`. Select the file you downloaded and confirm with `OK`. 
+In CLion, go to `Settings` &rarr; `Editor` &rarr; `Code Style`. Then, under `Scheme`, click on `Show Scheme Actions` and then `Import Scheme...`. Select the file you downloaded and confirm with `OK`. 
 
-You can use the `Reformat Code` or `Reformat File...` actions to apply the style rules as needed. Use `Optimize imports` to re
+You can use the `Reformat Code` or `Reformat File...` actions to apply the style rules as needed.
 
 If using the CLion VCS window to commit code, you can enable automatic formatting before each commit. Go to `Version Control` &rarr; `Commit` and select `Reformat code` and `Optimize imports` under `Before Commit`.
 
