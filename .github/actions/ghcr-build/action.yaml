@@ -41,10 +41,10 @@ runs:
   steps:
     # When using a composite action from another repo,
     # there is no canonical way to call other composite actions from that same repo
-    # so we use make a symlink to the repo's .github folder so that local `uses: ./` can work
+    # so we make a symlink to the repo's .github folder so that local `uses: ./` can work
     # Note: using ${{ github.action_path }} in a `uses:` does not work
     # as the variable doesn't exist when GitHub resolves it
-    - name: Allows to use actions from this repository
+    - name: Create symlink for actions from this repository
       run: |
         ln -s ${{ github.action_path }}/../.. .gha
       shell: bash
