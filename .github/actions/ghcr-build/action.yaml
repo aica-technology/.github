@@ -51,6 +51,7 @@ runs:
           IMAGE=ghcr.io/${IMAGE}
         fi
         echo "image=${IMAGE}" >> $GITHUB_OUTPUT
+      shell: bash
 
     - id: build
       uses: ./actions/docker-build
