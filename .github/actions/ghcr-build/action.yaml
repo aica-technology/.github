@@ -42,7 +42,7 @@ runs:
     # When using a composite action, the current context is not of this repository but of the caller repository
     # so we need to checkout this repository ourselves to be able to use sibling actions
     - name: Allows to use actions from this repository
-      runs: |
+      run: |
         ls -la ${{ github.action_path }}
         ln -s ${{ github.action_path }}/.. .gha
         ls -la .gha
