@@ -27,23 +27,6 @@ inputs:
     description: "Any build flags that should be forwarded to the build process as an array"
     required: false
     type: string
-  artifact_name:
-    description: "Name of the artifact to be downloaded"
-    required: false
-    type: string
-  artifact_path:
-    description: "Path where the artifact should be downloaded to"
-    required: false
-    type: string
-  checkout_ref:
-    description: "The reference for the repository checkout"
-    required: false
-    type: string
-
-secrets:
-  token:
-    description: "The GitHub token passed from the caller workflow"
-    required: true
 
 outputs:
   image_hash:
@@ -53,23 +36,6 @@ outputs:
 runs:
   using: composite
   steps:
-    - name: Checkout repository with ref
-      if: inputs.checkout_ref != ''
-      uses: actions/checkout@v3
-      with:
-        ref: ${{ inputs.checkout_ref }}
-
-    - name: Checkout repository
-      if: inputs.checkout_ref == ''
-      uses: actions/checkout@v3
-
-    - name: Download artifact
-      if: inputs.artifact_name
-      uses: actions/download-artifact@v3
-      with:
-        name: ${{ inputs.artifact_name }}
-        path: ${{ inputs.artifact_path }}
-
     - name: Set up QEMU
       if: inputs.platforms != 'linux/amd64'
       uses: docker/setup-qemu-action@v2
@@ -79,18 +45,11 @@ runs:
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v2
 
-    - name: Login to GitHub Package Registry
-      run: echo "${{ secrets.token }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
-      shell: bash
-
     - id: build-push
       name: Build and push image
       run: |
         IMAGES=()
         IMAGE=${{ inputs.image_name }}
-        if [[ "${IMAGE:0:8}" != "ghcr.io/" ]]; then
-          IMAGE=ghcr.io/${IMAGE}
-        fi
         IFS=',' read -ra TAGS <<< ${{ inputs.image_tags }}
         for TAG in "${TAGS[@]}"
         do
