@@ -47,7 +47,7 @@ runs:
         ref: ${{ github.action_ref }}
         path: .gha
 
-    - uses: .gha/.github/actions/login-to-ghcr
+    - uses: ./.gha/.github/actions/login-to-ghcr
       with:
         token: ${{ inputs.token }}
 
@@ -62,7 +62,7 @@ runs:
       shell: bash
 
     - id: build
-      uses: .gha/.github/actions/docker-build
+      uses: ./.gha/.github/actions/docker-build
       with:
         image_name: ${{ steps.ensure-image.outputs.image }}
         image_tags: ${{ inputs.image_tags }}
