@@ -41,7 +41,7 @@ runs:
   steps:
     - uses: actions/checkout@v3
 
-    - uses: aica-technology/.github/.github/actions/login-to-ghcr
+    - uses: ${{ github.action_path }}/../login-to-ghcr
       with:
         token: ${{ inputs.token }}
 
@@ -56,7 +56,7 @@ runs:
       shell: bash
 
     - id: build
-      uses: aica-technology/.github/.github/actions/docker-build
+      uses: ${{ github.action_path }}/../docker-build
       with:
         image_name: ${{ steps.ensure-image.outputs.image }}
         image_tags: ${{ inputs.image_tags }}
