@@ -27,8 +27,6 @@ inputs:
     description: "Any build flags that should be forwarded to the build process as an array"
     required: false
     type: string
-
-secrets:
   token:
     description: "The GitHub token passed from the caller workflow"
     required: true
@@ -42,8 +40,8 @@ runs:
   using: composite
   steps:
     - uses: ./actions/login-to-ghcr
-      secrets:
-        token: ${{ secrets.token }}
+      with:
+        token: ${{ inputs.token }}
 
     - id: ensure-image
       name: Ensure the image name is correct

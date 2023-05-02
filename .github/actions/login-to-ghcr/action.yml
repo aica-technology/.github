@@ -1,6 +1,6 @@
 name: Login to GHCR
 
-secrets:
+inputs:
   token:
     description: "The GitHub token passed from the caller workflow"
     required: true
@@ -9,5 +9,5 @@ runs:
   using: composite
   steps:
     - name: Login to GitHub Package Registry
-      run: echo "${{ secrets.token }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+      run: echo "${{ inputs.token }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
       shell: bash
