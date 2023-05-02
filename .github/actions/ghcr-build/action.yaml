@@ -39,13 +39,14 @@ outputs:
 runs:
   using: composite
   steps:
-    # When using a composite action, the current context is not of this repository but of the caller repository
-    # so we need to checkout this repository ourselves to be able to use sibling actions
+    # When using a composite action from another repo,
+    # there is no canonical way to call other composite actions from that same repo
+    # so we use make a symlink to the repo's .github folder so that local `uses: ./` can work
+    # Note: using ${{ github.action_path }} in a `uses:` does not work
+    # as the variable doesn't exist when GitHub resolves it
     - name: Allows to use actions from this repository
       run: |
-        ls -la ${{ github.action_path }}
-        ln -s ${{ github.action_path }}/.. .gha
-        ls -la .gha
+        ln -s ${{ github.action_path }}/../.. .gha
       shell: bash
 
     - uses: ./.gha/actions/login-to-ghcr
