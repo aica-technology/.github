@@ -1,0 +1,74 @@
+name: Build and Push (multi-arch) for GHCR
+
+inputs:
+  image_name:
+    description: 'The name of the image (for example "aica-technology/image-name")'
+    required: true
+    type: string
+  image_tags:
+    description: 'The tag(s) of the image as comma-separated list (for example "latest,devel")'
+    required: true
+    type: string
+  platforms:
+    description: 'The desired build platform(s) as comma-separated list (for example "linux/amd64,linux/arm64")'
+    required: true
+    type: string
+  build_context_path:
+    description: "Path to the directory that specifies the Docker build context"
+    required: false
+    type: string
+    default: "."
+  dockerfile_path:
+    description: "Path of the Dockerfile"
+    required: false
+    type: string
+    default: "Dockerfile"
+  build_flags:
+    description: "Any build flags that should be forwarded to the build process as an array"
+    required: false
+    type: string
+  token:
+    description: "The GitHub token passed from the caller workflow"
+    required: true
+
+outputs:
+  image_hash:
+    description: "The SHA of the pushed image"
+    value: ${{ steps.build.outputs.image_hash }}
+
+runs:
+  using: composite
+  steps:
+    # When using a composite action from another repo,
+    # there is no canonical way to call other composite actions from that same repo
+    # so we make a symlink to the repo's .github folder so that local `uses: ./` can work
+    # Note: using ${{ github.action_path }} in a `uses:` does not work
+    # as the variable doesn't exist when GitHub resolves it
+    - name: Create symlink for actions from this repository
+      run: |
+        ln -s ${{ github.action_path }}/../.. .gha
+      shell: bash
+
+    - uses: ./.gha/actions/login-to-ghcr
+      with:
+        token: ${{ inputs.token }}
+
+    - id: ensure-image
+      name: Ensure the image name is correct
+      run: |
+        IMAGE=${{ inputs.image_name }}
+        if [[ "${IMAGE:0:8}" != "ghcr.io/" ]]; then
+          IMAGE=ghcr.io/${IMAGE}
+        fi
+        echo "image=${IMAGE}" >> $GITHUB_OUTPUT
+      shell: bash
+
+    - id: build
+      uses: ./.gha/actions/docker-build
+      with:
+        image_name: ${{ steps.ensure-image.outputs.image }}
+        image_tags: ${{ inputs.image_tags }}
+        platforms: ${{ inputs.platforms }}
+        build_context_path: ${{ inputs.build_context_path }}
+        dockerfile_path: ${{ inputs.dockerfile_path }}
+        build_flags: ${{ inputs.build_flags }}

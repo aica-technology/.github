@@ -1,0 +1,64 @@
+name: Build and Push (multi-arch)
+
+inputs:
+  image_name:
+    description: 'The name of the image (for example "aica-technology/image-name")'
+    required: true
+    type: string
+  image_tags:
+    description: 'The tag(s) of the image as comma-separated list (for example "latest,devel")'
+    required: true
+    type: string
+  platforms:
+    description: 'The desired build platform(s) as comma-separated list (for example "linux/amd64,linux/arm64")'
+    required: true
+    type: string
+  build_context_path:
+    description: "Path to the directory that specifies the Docker build context"
+    required: false
+    type: string
+    default: "."
+  dockerfile_path:
+    description: "Path of the Dockerfile"
+    required: false
+    type: string
+    default: "Dockerfile"
+  build_flags:
+    description: "Any build flags that should be forwarded to the build process as an array"
+    required: false
+    type: string
+
+outputs:
+  image_hash:
+    description: "The SHA of the pushed image"
+    value: ${{ steps.build-push.outputs.sha }}
+
+runs:
+  using: composite
+  steps:
+    - name: Set up QEMU
+      if: inputs.platforms != 'linux/amd64'
+      uses: docker/setup-qemu-action@v2
+      with:
+        platforms: ${{ inputs.platforms }}
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+
+    - id: build-push
+      name: Build and push image
+      run: |
+        IMAGES=()
+        IMAGE=${{ inputs.image_name }}
+        IFS=',' read -ra TAGS <<< ${{ inputs.image_tags }}
+        for TAG in "${TAGS[@]}"
+        do
+          IMAGES+=(-t ${IMAGE}:${TAG})
+        done
+        docker buildx build --file ${{ inputs.dockerfile_path }} \
+          --platform=${{ inputs.platforms }} ${{ inputs.build_flags }} \
+          --push --provenance=false --sbom=false ${IMAGES[@]} \
+          ${{ inputs.build_context_path }}
+        SHA=$(docker buildx imagetools inspect ${IMAGE}:${TAG} | grep Digest)
+        echo "sha=${SHA##*sha256:}" >> $GITHUB_OUTPUT
+      shell: bash
