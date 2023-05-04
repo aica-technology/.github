@@ -1,0 +1,25 @@
+name: Pick a Docker tag based from the GitHub workflow being run
+
+outputs:
+  tag:
+    description: "The Docker tag"
+    value: ${{ steps.pick.outputs.tag }}
+
+runs:
+  using: composite
+  steps:
+    - name: Pick a tag
+      id: pick
+      run: |
+        GITHUB_REFER="${{ github.ref }}"
+        BRANCH="${{ github.ref_name }}"
+        if [[ "${BRANCH}" == "develop" ]]; then
+          TAG="develop-${{ github.run_number }}"
+        elif [[ "${BRANCH}" == "main" ]]; then
+          TAG=latest
+        else
+          TAG="${GITHUB_REFER#refs/*/}"
+        fi
+        echo "Tag: ${TAG}"
+        echo "tag=${TAG}" >> $GITHUB_OUTPUT
+      shell: bash
