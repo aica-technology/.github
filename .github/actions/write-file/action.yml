@@ -1,6 +1,10 @@
 name: Write File
 
 inputs:
+  repository:
+    description: "The repository to commit to"
+    required: false
+    type: string
   content:
     description: "The content to be written to file"
     required: true
@@ -13,19 +17,47 @@ inputs:
     description: "The name of the branch to commit to"
     required: true
     type: string
+  input_is_a_file:
+    description: "Whether the input is a file (default: false)"
+    required: false
+    default: false
+    type: boolean
+  token:
+    description: "The token to use for authentication"
+    type: string
+  message:
+    description: "The commit message"
+    required: false
+    type: string
 
 runs:
   using: composite
   steps:
     - name: Checkout repository
       uses: actions/checkout@v3
+      with:
+        repository: ${{ inputs.repository }}
+        ref: ${{ inputs.branch }}
+        path: ${{ github.action_path }}/repo
+        token: ${{ inputs.token }}
 
     - name: Write file
       run: |
         git config user.name github-actions[bot]
         git config user.email github-actions[bot]@users.noreply.github.com
-        git reset --hard HEAD && git fetch origin ${{ inputs.branch }} && git checkout ${{ inputs.branch }} || exit 1
-        echo ${{ inputs.content }} > ${{ inputs.filepath }}
+
+        mkdir -p $(dirname ${{ inputs.filepath }})
+        if [ "${{ inputs.input_is_a_file }}" = true ]; then
+          cp ${{ inputs.content }} ${{ inputs.filepath }}
+        else
+          echo "${{ inputs.content }}" > ${{ inputs.filepath }}
+        fi
+
         git add ${{ inputs.filepath }}
-        git commit -m "Write file: ${{ inputs.filepath }}" && git push -f
+        DEFAULT_MSG="automatically update ${{ inputs.filepath }}"
+        if [ -n "${{ inputs.message }}" ]; then
+          DEFAULT_MSG="${{ inputs.message }}"
+        fi
+        git commit -m "ci: $DEFAULT_MSG"
+        git push -f
       shell: bash
