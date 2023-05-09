@@ -57,7 +57,7 @@ runs:
 
         DEST="${{ inputs.checkout_path }}/${{ inputs.filepath }}"
         echo "Copying file to $DEST"
-        mkdir -p "$(dirname \"$DEST\")"
+        mkdir -p "$(dirname $DEST)"
         if [ -n "${{ inputs.file_source }}" ]; then
           cp ${{ inputs.file_source }} "$DEST"
         elif [ -n "${{ inputs.content }}" ]; then
@@ -69,6 +69,7 @@ runs:
 
         echo "Pushing changes"
         cd "${{ inputs.checkout_path }}"
+        git status
         git add "${{ inputs.filepath }}"
         DEFAULT_MSG="automatically update ${{ inputs.filepath }}"
         if [ -n "${{ inputs.message }}" ]; then
