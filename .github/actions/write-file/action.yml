@@ -6,8 +6,8 @@ inputs:
     required: false
     type: string
   content:
-    description: "The content to be written to file"
-    required: true
+    description: "The content to be written to file (incompatible with `file_source`)"
+    required: false
     type: string
   filepath:
     description: "The path of the file"
@@ -17,11 +17,10 @@ inputs:
     description: "The name of the branch to commit to"
     required: true
     type: string
-  input_is_a_file:
-    description: "Whether the input is a file (default: false)"
+  file_source:
+    description: "The file to be copied (incompatible with `content`)"
     required: false
-    default: false
-    type: boolean
+    type: string
   token:
     description: "The token to use for authentication"
     type: string
@@ -47,10 +46,13 @@ runs:
         git config user.email github-actions[bot]@users.noreply.github.com
 
         mkdir -p $(dirname ${{ inputs.filepath }})
-        if [ "${{ inputs.input_is_a_file }}" = true ]; then
-          cp ${{ inputs.content }} ${{ inputs.filepath }}
-        else
+        if [ -n "${{ inputs.file_source }}" ]; then
+          cp ${{ inputs.file_source }} ${{ inputs.filepath }}
+        elif [ -n "${{ inputs.content }}" ]; then
           echo "${{ inputs.content }}" > ${{ inputs.filepath }}
+        else
+          echo "No content or file_source specified"
+          exit 1
         fi
 
         git add ${{ inputs.filepath }}
