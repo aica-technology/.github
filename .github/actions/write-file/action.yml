@@ -50,6 +50,11 @@ runs:
         git config --global user.name github-actions[bot]
         git config --global user.email github-actions[bot]@users.noreply.github.com
 
+        if [ -n "${{ inputs.filepath }}" && -n "${{ inputs.file_source }}" ]; then
+          echo "Cannot specify both filepath and file_source"
+          exit 1
+        fi
+
         DEST="${{ inputs.checkout_path }}/${{ inputs.filepath }}"
         mkdir -p "$(dirname \"$DEST\")"
         if [ -n "${{ inputs.file_source }}" ]; then
