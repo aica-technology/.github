@@ -28,6 +28,11 @@ inputs:
     description: "The commit message"
     required: false
     type: string
+  checkout_path:
+    description: "The path to checkout the repository to"
+    required: false
+    default: repo
+    type: string
 
 runs:
   using: composite
@@ -37,7 +42,7 @@ runs:
       with:
         repository: ${{ inputs.repository }}
         ref: ${{ inputs.branch }}
-        path: ${{ github.action_path }}/repo
+        path: ${{ inputs.checkout_path }}
         token: ${{ inputs.token }}
 
     - name: Write file
@@ -45,17 +50,19 @@ runs:
         git config user.name github-actions[bot]
         git config user.email github-actions[bot]@users.noreply.github.com
 
-        mkdir -p $(dirname ${{ inputs.filepath }})
+        DEST="${{ inputs.checkout_path }}/${{ inputs.filepath }}"
+        mkdir -p "$(dirname \"$DEST\")"
         if [ -n "${{ inputs.file_source }}" ]; then
-          cp ${{ inputs.file_source }} ${{ inputs.filepath }}
+          cp ${{ inputs.file_source }} "$DEST"
         elif [ -n "${{ inputs.content }}" ]; then
-          echo "${{ inputs.content }}" > ${{ inputs.filepath }}
+          echo "${{ inputs.content }}" > "$DEST"
         else
           echo "No content or file_source specified"
           exit 1
         fi
 
-        git add ${{ inputs.filepath }}
+        cd "${{ inputs.checkout_path }}"
+        git add "${{ inputs.filepath }}"
         DEFAULT_MSG="automatically update ${{ inputs.filepath }}"
         if [ -n "${{ inputs.message }}" ]; then
           DEFAULT_MSG="${{ inputs.message }}"
