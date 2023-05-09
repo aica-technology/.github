@@ -1,9 +1,13 @@
 name: Write File
 
 inputs:
+  repository:
+    description: "The repository to commit to"
+    required: false
+    type: string
   content:
-    description: "The content to be written to file"
-    required: true
+    description: "The content to be written to file (incompatible with `file_source`)"
+    required: false
     type: string
   filepath:
     description: "The path of the file"
@@ -13,19 +17,61 @@ inputs:
     description: "The name of the branch to commit to"
     required: true
     type: string
+  file_source:
+    description: "The file to be copied (incompatible with `content`)"
+    required: false
+    type: string
+  token:
+    description: "The token to use for authentication"
+    type: string
+  message:
+    description: "The commit message"
+    required: false
+    type: string
+  checkout_path:
+    description: "The path to checkout the repository to"
+    required: false
+    default: repo
+    type: string
 
 runs:
   using: composite
   steps:
     - name: Checkout repository
       uses: actions/checkout@v3
+      with:
+        repository: ${{ inputs.repository }}
+        ref: ${{ inputs.branch }}
+        path: ${{ inputs.checkout_path }}
+        token: ${{ inputs.token }}
 
     - name: Write file
       run: |
-        git config user.name github-actions[bot]
-        git config user.email github-actions[bot]@users.noreply.github.com
-        git reset --hard HEAD && git fetch origin ${{ inputs.branch }} && git checkout ${{ inputs.branch }} || exit 1
-        echo ${{ inputs.content }} > ${{ inputs.filepath }}
-        git add ${{ inputs.filepath }}
-        git commit -m "Write file: ${{ inputs.filepath }}" && git push -f
+        git config --global user.name github-actions[bot]
+        git config --global user.email github-actions[bot]@users.noreply.github.com
+
+        if [ -n "${{ inputs.filepath }}" && -n "${{ inputs.file_source }}" ]; then
+          echo "Cannot specify both filepath and file_source"
+          exit 1
+        fi
+
+        DEST="${{ inputs.checkout_path }}/${{ inputs.filepath }}"
+        mkdir -p "$(dirname \"$DEST\")"
+        if [ -n "${{ inputs.file_source }}" ]; then
+          cp ${{ inputs.file_source }} "$DEST"
+        elif [ -n "${{ inputs.content }}" ]; then
+          echo "${{ inputs.content }}" > "$DEST"
+        else
+          echo "No content or file_source specified"
+          exit 1
+        fi
+
+        cd "${{ inputs.checkout_path }}"
+        git add "${{ inputs.filepath }}"
+        DEFAULT_MSG="automatically update ${{ inputs.filepath }}"
+        if [ -n "${{ inputs.message }}" ]; then
+          DEFAULT_MSG="${{ inputs.message }}"
+        fi
+        git commit -m "ci: $DEFAULT_MSG"
+        git push -f
       shell: bash

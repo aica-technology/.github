@@ -1,0 +1,26 @@
+name: Run a docker image and extract a file
+
+inputs:
+  image:
+    description: "The image to run"
+    required: true
+    type: string
+  source:
+    description: "The file within the image to extract"
+    required: true
+    type: string
+  destination:
+    description: "The path to extract the file to"
+    required: true
+    type: string
+
+runs:
+  using: composite
+  steps:
+    - name: Start a container, copy a file and delete it
+      run: |
+        NAME="copying$(uuidgen)"
+        docker create -ti --name "$NAME" ${{ inputs.image }} bash
+        docker cp "$NAME":"${{ inputs.source }}" "${{ inputs.destination }}"
+        docker rm -f "$NAME"
+      shell: bash
