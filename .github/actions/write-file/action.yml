@@ -56,6 +56,7 @@ runs:
         fi
 
         DEST="${{ inputs.checkout_path }}/${{ inputs.filepath }}"
+        echo "Copying file to $DEST"
         mkdir -p "$(dirname \"$DEST\")"
         if [ -n "${{ inputs.file_source }}" ]; then
           cp ${{ inputs.file_source }} "$DEST"
@@ -66,6 +67,7 @@ runs:
           exit 1
         fi
 
+        echo "Pushing changes"
         cd "${{ inputs.checkout_path }}"
         git add "${{ inputs.filepath }}"
         DEFAULT_MSG="automatically update ${{ inputs.filepath }}"
@@ -73,5 +75,5 @@ runs:
           DEFAULT_MSG="${{ inputs.message }}"
         fi
         git commit -m "ci: $DEFAULT_MSG"
-        git push -f
+        git push
       shell: bash
