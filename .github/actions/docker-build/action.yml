@@ -1,4 +1,4 @@
-name: Build and Push (multi-arch)
+name: Build and Push with Docker
 
 inputs:
   image_name:
@@ -9,9 +9,9 @@ inputs:
     description: 'The tag(s) of the image as comma-separated list (for example "latest,devel")'
     required: true
     type: string
-  platforms:
-    description: 'The desired build platform(s) as comma-separated list (for example "linux/amd64,linux/arm64")'
-    required: true
+  subcommand:
+    description: 'The subcommand to run (for "buildx")'
+    required: false
     type: string
   build_context_path:
     description: "Path to the directory that specifies the Docker build context"
@@ -36,15 +36,6 @@ outputs:
 runs:
   using: composite
   steps:
-    - name: Set up QEMU
-      if: inputs.platforms != 'linux/amd64'
-      uses: docker/setup-qemu-action@v2
-      with:
-        platforms: ${{ inputs.platforms }}
-
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v2
-
     - id: build-push
       name: Build and push image
       run: |
@@ -55,8 +46,8 @@ runs:
         do
           IMAGES+=(-t ${IMAGE}:${TAG})
         done
-        docker buildx build --file ${{ inputs.dockerfile_path }} \
-          --platform=${{ inputs.platforms }} ${{ inputs.build_flags }} \
+        docker ${{ inputs.subcommand }} build --file ${{ inputs.dockerfile_path }} \
+          ${{ inputs.build_flags }} \
           --push --provenance=false --sbom=false ${IMAGES[@]} \
           ${{ inputs.build_context_path }}
         SHA=$(docker buildx imagetools inspect ${IMAGE}:${TAG} | grep Digest)
