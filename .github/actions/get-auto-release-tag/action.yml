@@ -40,7 +40,7 @@ runs:
     - uses: ./.gha/actions/docker-tag-from-git
       id: parse-git
 
-    - uses: ./.gha/actions/package-xml-version
+    - uses: ./.gha/actions/parse-package-xml
       id: parse-package
       with:
         directory: ${{ inputs.directory }}

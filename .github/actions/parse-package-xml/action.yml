@@ -1,4 +1,4 @@
-name: Extract the version from package.xml
+name: Parse data from package.xml
 
 inputs:
   directory:
@@ -8,9 +8,12 @@ inputs:
     type: string
 
 outputs:
+  name:
+    description: "The name extracted from the package.xml"
+    value: ${{ steps.pick.outputs.name }}
   version:
     description: "The version extracted from the package.xml"
-    value: ${{ steps.pick.outputs.tag }}
+    value: ${{ steps.pick.outputs.version }}
 
 runs:
   using: composite
@@ -21,7 +24,10 @@ runs:
       shell: bash
     - name: Read package.xml
       run: |
+        NAME="$(xq -x //package/name < '${{ inputs.directory }}/package.xml')"
         VERSION="$(xq -x //package/version < '${{ inputs.directory }}/package.xml')"
+        echo "Name: $NAME"
         echo "Version: $VERSION"
+        echo "name=$NAME" >> $GITHUB_OUTPUT
         echo "version=$VERSION" >> $GITHUB_OUTPUT
       shell: bash
