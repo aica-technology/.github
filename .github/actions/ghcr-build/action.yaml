@@ -53,21 +53,16 @@ runs:
       with:
         token: ${{ inputs.token }}
 
-    - id: ensure-image
-      name: Ensure the image name is correct
-      run: |
-        IMAGE=${{ inputs.image_name }}
-        if [[ "${IMAGE:0:8}" != "ghcr.io/" ]]; then
-          IMAGE=ghcr.io/${IMAGE}
-        fi
-        echo "image=${IMAGE}" >> $GITHUB_OUTPUT
-      shell: bash
+    - uses: ./.gha-gb/actions/ensure-prefix
+      id: ensure-image
+      with:
+        image_name: ${{ inputs.image_name }}
 
     - id: build
       if: inputs.platforms == ""
       uses: ./.gha-gb/actions/docker-build
       with:
-        image_name: ${{ steps.ensure-image.outputs.image }}
+        image_name: ${{ steps.ensure-image.outputs.image_name }}
         image_tags: ${{ inputs.image_tags }}
         build_context_path: ${{ inputs.build_context_path }}
         dockerfile_path: ${{ inputs.dockerfile_path }}
@@ -77,7 +72,7 @@ runs:
       if: inputs.platforms != ""
       uses: ./.gha-gb/actions/docker-buildx
       with:
-        image_name: ${{ steps.ensure-image.outputs.image }}
+        image_name: ${{ steps.ensure-image.outputs.image_name }}
         image_tags: ${{ inputs.image_tags }}
         platforms: ${{ inputs.platforms }}
         build_context_path: ${{ inputs.build_context_path }}

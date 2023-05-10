@@ -35,20 +35,15 @@ runs:
       with:
         token: ${{ inputs.token }}
 
-    - id: ensure-image
-      name: Ensure the image name is correct
-      run: |
-        IMAGE=${{ inputs.image_name }}
-        if [[ "${IMAGE:0:8}" != "ghcr.io/" ]]; then
-          IMAGE=ghcr.io/${IMAGE}
-        fi
-        echo "image=${IMAGE}" >> $GITHUB_OUTPUT
-      shell: bash
+    - uses: ./.gha-ge/actions/ensure-prefix
+      id: ensure-image
+      with:
+        image_name: ${{ inputs.image_name }}
 
     - name: Check if it exists
       id: check
       run: |
-        if docker manifest inspect ${{ steps.ensure-image.outputs.image }}:${{ inputs.image_tag }}; then
+        if docker manifest inspect ${{ steps.ensure-image.outputs.image_name }}:${{ inputs.image_tag }}; then
           EXISTS=true
         else
           EXISTS=false

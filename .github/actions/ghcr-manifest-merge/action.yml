@@ -1,0 +1,70 @@
+name: Merge multiple single-arch image in one multi-arch image
+
+inputs:
+  image_name:
+    description: 'The name of the image (for example "aica-technology/image-name")'
+    required: true
+    type: string
+  image_tag:
+    description: 'The tag of the image (for example "latest")'
+    required: true
+    type: string
+  archs:
+    description: 'The archs to merge as comma-separated list (for example "amd64,arm64")'
+    required: true
+    type: string
+  token:
+    description: "The GitHub token passed from the caller workflow"
+    required: true
+    type: string
+
+outputs:
+  image_hash:
+    description: "The SHA of the pushed image"
+    value: ${{ steps.build-push.outputs.image_hash }}
+
+runs:
+  using: composite
+  steps:
+    # When using a composite action from another repo,
+    # there is no canonical way to call other composite actions from that same repo
+    # so we make a symlink to the repo's .github folder so that local `uses: ./` can work
+    # Note: using ${{ github.action_path }} in a `uses:` does not work
+    # as the variable doesn't exist when GitHub resolves it
+    - name: Create symlink for actions from this repository
+      run: |
+        ln -s ${{ github.action_path }}/../.. .gha-gmm
+      shell: bash
+
+    - uses: ./.gha-gmm/actions/login-to-ghcr
+      with:
+        token: ${{ inputs.token }}
+
+    - uses: ./.gha-gmm/actions/ensure-prefix
+      id: ensure-image
+      with:
+        image_name: ${{ inputs.image_name }}
+
+    - name: Calculate intermediate image names
+      id: calculate-intermediate
+      run: |
+        IMAGE="${{ steps.ensure-image.outputs.image_name }}"
+        TAG="${{ inputs.image_tag }}"
+
+        IMAGES=()
+        IFS=',' read -ra ARCHS <<< ${{ inputs.archs }}
+        for ARCH in "${ARCHS[@]}"
+        do
+          IMAGES+=("${IMAGE}:${TAG}-${ARCH}")
+        done
+        JOINED_IMAGES="$(IFS=, ; echo "${IMAGES[*]}")"
+
+        echo "Images: ${JOINED_IMAGES}"
+        echo "images=${JOINED_IMAGES}" >> $GITHUB_OUTPUT
+      shell: bash
+
+    - uses: Noelware/docker-manifest-action@0.3.1
+      with:
+        inputs: ${{ steps.ensure-image.outputs.image_name }}:${{ inputs.image_tag }}
+        images: ${{ steps.calculate-intermediate.outputs.images }}
+        push: true
