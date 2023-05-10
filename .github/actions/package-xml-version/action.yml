@@ -1,0 +1,26 @@
+name: Extract the version from package.xml
+
+inputs:
+  directory:
+    description: "Where the package.xml is stored"
+    required: false
+    type: string
+
+outputs:
+  version:
+    description: "The version extracted from the package.xml"
+    value: ${{ steps.pick.outputs.tag }}
+
+runs:
+  using: composite
+  steps:
+    - name: Install xq
+      run: |
+        curl -sSL https://bit.ly/install-xq | sudo bash
+      shell: bash
+    - name: Read package.xml
+      run: |
+        VERSION="$(xq -x //package/version < '${{ inputs.directory }}/package.xml')"
+        echo "Version: $VERSION"
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+      shell: bash

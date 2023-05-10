@@ -1,0 +1,59 @@
+name: Check if a tag exists on GHCR for a given image
+
+inputs:
+  image_name:
+    description: 'The name of the image (for example "aica-technology/image-name")'
+    required: true
+    type: string
+  image_tag:
+    description: 'The tag of the image (for example "devel")'
+    required: true
+    type: string
+  token:
+    description: "The GitHub token passed from the caller workflow"
+    required: true
+
+outputs:
+  exists:
+    description: "Does it exists?"
+    value: ${{ steps.check.outputs.exists }}
+    type: boolean
+
+runs:
+  using: composite
+  steps:
+    # When using a composite action from another repo,
+    # there is no canonical way to call other composite actions from that same repo
+    # so we make a symlink to the repo's .github folder so that local `uses: ./` can work
+    # Note: using ${{ github.action_path }} in a `uses:` does not work
+    # as the variable doesn't exist when GitHub resolves it
+    - name: Create symlink for actions from this repository
+      run: |
+        ln -s ${{ github.action_path }}/../.. .gha
+      shell: bash
+
+    - uses: ./.gha/actions/login-to-ghcr
+      with:
+        token: ${{ inputs.token }}
+
+    - id: ensure-image
+      name: Ensure the image name is correct
+      run: |
+        IMAGE=${{ inputs.image_name }}
+        if [[ "${IMAGE:0:8}" != "ghcr.io/" ]]; then
+          IMAGE=ghcr.io/${IMAGE}
+        fi
+        echo "image=${IMAGE}" >> $GITHUB_OUTPUT
+      shell: bash
+
+    - name: Check if it exists
+      id: check
+      run: |
+        if docker manifest inspect ${{ steps.ensure-image.outputs.image }}:${{ inputs.image_tag }}; then
+          EXISTS=true
+        else
+          EXISTS=false
+        fi
+        echo "Exists: ${EXISTS}"
+        echo "exists=${EXISTS}" >> $GITHUB_OUTPUT
+      shell: bash
