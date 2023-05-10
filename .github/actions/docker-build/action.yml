@@ -9,10 +9,6 @@ inputs:
     description: 'The tag(s) of the image as comma-separated list (for example "latest,devel")'
     required: true
     type: string
-  subcommand:
-    description: 'The subcommand to run (for "buildx")'
-    required: false
-    type: string
   build_context_path:
     description: "Path to the directory that specifies the Docker build context"
     required: false
@@ -36,6 +32,9 @@ outputs:
 runs:
   using: composite
   steps:
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+
     - id: build-push
       name: Build and push image
       run: |
@@ -46,7 +45,7 @@ runs:
         do
           IMAGES+=(-t ${IMAGE}:${TAG})
         done
-        docker ${{ inputs.subcommand }} build --file ${{ inputs.dockerfile_path }} \
+        docker buildx build --file ${{ inputs.dockerfile_path }} \
           ${{ inputs.build_flags }} \
           --push --provenance=false --sbom=false ${IMAGES[@]} \
           ${{ inputs.build_context_path }}

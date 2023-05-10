@@ -70,7 +70,7 @@ runs:
 
     - id: buildx
       if: ${{ inputs.platforms != '' }}
-      uses: ./.gha-gb/actions/docker-buildx
+      uses: ./.gha-gb/actions/docker-build-multi
       with:
         image_name: ${{ steps.ensure-image.outputs.image_name }}
         image_tags: ${{ inputs.image_tags }}
