@@ -28,7 +28,7 @@ runs:
     # as the variable doesn't exist when GitHub resolves it
     - name: Create symlink for actions from this repository
       run: |
-        ln -s ${{ github.action_path }}/../.. .gha
+        ln -sf ${{ github.action_path }}/../.. .gha
       shell: bash
 
     - uses: ./.gha/actions/login-to-ghcr
