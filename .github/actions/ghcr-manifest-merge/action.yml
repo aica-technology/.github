@@ -5,8 +5,8 @@ inputs:
     description: 'The name of the image (for example "aica-technology/image-name")'
     required: true
     type: string
-  image_tag:
-    description: 'The tag of the image (for example "latest")'
+  image_tags:
+    description: 'The tags of the image (for example "latest,v1.0.0")'
     required: true
     type: string
   archs:
@@ -49,22 +49,30 @@ runs:
       id: calculate-intermediate
       run: |
         IMAGE="${{ steps.ensure-image.outputs.image_name }}"
-        TAG="${{ inputs.image_tag }}"
 
+        INPUTS=()
         IMAGES=()
-        IFS=',' read -ra ARCHS <<< ${{ inputs.archs }}
-        for ARCH in "${ARCHS[@]}"
+        IFS=',' read -ra TAGS <<< ${{ inputs.image_tags }}
+        for TAG in "${TAGS[@]}"
         do
-          IMAGES+=("${IMAGE}:${TAG}-${ARCH}")
+          INPUTS+=("${IMAGE}:${TAG}")
+          IFS=',' read -ra ARCHS <<< ${{ inputs.archs }}
+          for ARCH in "${ARCHS[@]}"
+          do
+            IMAGES+=("${IMAGE}:${TAG}-${ARCH}")
+          done
         done
+        JOINED_INPUTS="$(IFS=, ; echo "${INPUTS[*]}")"
         JOINED_IMAGES="$(IFS=, ; echo "${IMAGES[*]}")"
 
+        echo "Inputs: ${JOINED_INPUTS}"
         echo "Images: ${JOINED_IMAGES}"
+        echo "inputs=${JOINED_INPUTS}" >> $GITHUB_OUTPUT
         echo "images=${JOINED_IMAGES}" >> $GITHUB_OUTPUT
       shell: bash
 
     - uses: Noelware/docker-manifest-action@0.3.1
       with:
-        inputs: ${{ steps.ensure-image.outputs.image_name }}:${{ inputs.image_tag }}
+        inputs: ${{ steps.calculate-intermediate.outputs.inputs }}
         images: ${{ steps.calculate-intermediate.outputs.images }}
         push: true

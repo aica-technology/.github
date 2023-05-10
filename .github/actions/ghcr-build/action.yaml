@@ -34,7 +34,7 @@ inputs:
 outputs:
   image_hash:
     description: "The SHA of the pushed image"
-    value: ${{ inputs.platforms != "" && steps.buildx.outputs.image_hash || steps.build.outputs.image_hash }}
+    value: ${{ inputs.platforms != '' && steps.buildx.outputs.image_hash || steps.build.outputs.image_hash }}
 
 runs:
   using: composite
@@ -59,7 +59,7 @@ runs:
         image_name: ${{ inputs.image_name }}
 
     - id: build
-      if: inputs.platforms == ""
+      if: ${{ inputs.platforms == "" }}
       uses: ./.gha-gb/actions/docker-build
       with:
         image_name: ${{ steps.ensure-image.outputs.image_name }}
@@ -69,7 +69,7 @@ runs:
         build_flags: ${{ inputs.build_flags }}
 
     - id: buildx
-      if: inputs.platforms != ""
+      if: ${{ inputs.platforms != "" }}
       uses: ./.gha-gb/actions/docker-buildx
       with:
         image_name: ${{ steps.ensure-image.outputs.image_name }}
