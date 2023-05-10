@@ -10,10 +10,10 @@ inputs:
 outputs:
   name:
     description: "The name extracted from the package.xml"
-    value: ${{ steps.pick.outputs.name }}
+    value: ${{ steps.parse.outputs.name }}
   version:
     description: "The version extracted from the package.xml"
-    value: ${{ steps.pick.outputs.version }}
+    value: ${{ steps.parse.outputs.version }}
 
 runs:
   using: composite
@@ -23,6 +23,7 @@ runs:
         curl -sSL https://bit.ly/install-xq | sudo bash
       shell: bash
     - name: Read package.xml
+      id: parse
       run: |
         NAME="$(xq -x //package/name < '${{ inputs.directory }}/package.xml')"
         VERSION="$(xq -x //package/version < '${{ inputs.directory }}/package.xml')"
