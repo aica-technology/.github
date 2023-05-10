@@ -34,21 +34,18 @@ runs:
     # as the variable doesn't exist when GitHub resolves it
     - name: Create symlink for actions from this repository
       run: |
-        # if the link doesn't exist, then create it
-        if [ ! -f .gha ]; then
-          ln -s ${{ github.action_path }}/../.. .gha
-        fi
+        ln -s ${{ github.action_path }}/../.. .gha-gart
       shell: bash
 
-    - uses: ./.gha/actions/docker-tag-from-git
+    - uses: ./.gha-gart/actions/docker-tag-from-git
       id: parse-git
 
-    - uses: ./.gha/actions/parse-package-xml
+    - uses: ./.gha-gart/actions/parse-package-xml
       id: parse-package
       with:
         directory: ${{ inputs.directory }}
 
-    - uses: ./.gha/actions/ghcr-exists
+    - uses: ./.gha-gart/actions/ghcr-exists
       id: exists
       with:
         image_name: ${{ github.repository }}

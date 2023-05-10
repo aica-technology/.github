@@ -46,12 +46,10 @@ runs:
     # as the variable doesn't exist when GitHub resolves it
     - name: Create symlink for actions from this repository
       run: |
-        if [ ! -f .gha ]; then
-          ln -s ${{ github.action_path }}/../.. .gha
-        fi
+        ln -s ${{ github.action_path }}/../.. .gha-gb
       shell: bash
 
-    - uses: ./.gha/actions/login-to-ghcr
+    - uses: ./.gha-gb/actions/login-to-ghcr
       with:
         token: ${{ inputs.token }}
 
@@ -66,7 +64,7 @@ runs:
       shell: bash
 
     - id: build
-      uses: ./.gha/actions/docker-build
+      uses: ./.gha-gb/actions/docker-build
       with:
         image_name: ${{ steps.ensure-image.outputs.image }}
         image_tags: ${{ inputs.image_tags }}
