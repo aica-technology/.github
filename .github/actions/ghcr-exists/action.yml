@@ -17,7 +17,6 @@ outputs:
   exists:
     description: "Does it exists?"
     value: ${{ steps.check.outputs.exists }}
-    type: boolean
 
 runs:
   using: composite
