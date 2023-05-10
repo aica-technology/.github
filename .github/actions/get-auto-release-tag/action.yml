@@ -34,7 +34,10 @@ runs:
     # as the variable doesn't exist when GitHub resolves it
     - name: Create symlink for actions from this repository
       run: |
-        ln -sf ${{ github.action_path }}/../.. .gha
+        # if the link doesn't exist, then create it
+        if [ ! -f .gha ]; then
+          ln -s ${{ github.action_path }}/../.. .gha
+        fi
       shell: bash
 
     - uses: ./.gha/actions/docker-tag-from-git
