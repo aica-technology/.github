@@ -4,6 +4,7 @@ inputs:
   directory:
     description: "Where the package.xml is stored"
     required: false
+    default: .
     type: string
 
 outputs:

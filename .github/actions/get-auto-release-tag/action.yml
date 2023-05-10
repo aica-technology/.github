@@ -1,0 +1,72 @@
+name: Get the tag to use for the current build
+
+inputs:
+  image_name:
+    description: 'The name of the image (for example "aica-technology/image-name")'
+    required: true
+    type: string
+  directory:
+    description: "Where the package.xml is stored"
+    required: true
+    type: string
+  token:
+    description: "The GitHub token passed from the caller workflow"
+    required: true
+
+outputs:
+  image_tags:
+    description: "The docker tags to build and push"
+    value: ${{ steps.calculate.outputs.image_tags }}
+  create_tag:
+    description: "Should you push a new tag?"
+    value: ${{ steps.calculate.outputs.create_tag }}
+  git_tag:
+    description: "The git tag to create (if `create_tag` == true)"
+    value: ${{ steps.calculate.outputs.git_tag }}
+
+runs:
+  using: composite
+  steps:
+    # When using a composite action from another repo,
+    # there is no canonical way to call other composite actions from that same repo
+    # so we make a symlink to the repo's .github folder so that local `uses: ./` can work
+    # Note: using ${{ github.action_path }} in a `uses:` does not work
+    # as the variable doesn't exist when GitHub resolves it
+    - name: Create symlink for actions from this repository
+      run: |
+        ln -s ${{ github.action_path }}/../.. .gha
+      shell: bash
+
+    - uses: ./.gha/actions/docker-tag-from-git
+      id: parse-git
+
+    - uses: ./.gha/actions/package-xml-version
+      id: parse-package
+      with:
+        directory: ${{ inputs.directory }}
+
+    - uses: ./.gha/actions/ghcr-exists
+      id: exists
+      with:
+        image_name: ${{ github.repository }}
+        image_tag: ${{ steps.parse-package.outputs.version }}
+        token: ${{ inputs.token }}
+
+    - name: Calculate tag
+      id: calculate
+      run: |
+        IMAGE_TAGS="${{ steps.parse-git.outputs.tags }}"
+        if [[ "${{ steps.exists.outputs.exists }}" == "true" ]]; then
+          CREATE_TAG=false
+        else
+          CREATE_TAG=true
+          GIT_TAG="${{ steps.parse-package.outputs.version }}"
+          IMAGE_TAGS="${IMAGE_TAGS},${GIT_TAG}"
+        fi
+        echo "Image tags: ${IMAGE_TAGS}"
+        echo "Create tag: ${CREATE_TAG}"
+        echo "Git tag: ${GIT_TAG}"
+        echo "image_tags=${IMAGE_TAGS}" >> $GITHUB_OUTPUT
+        echo "create_tag=${CREATE_TAG}" >> $GITHUB_OUTPUT
+        echo "git_tag=${GIT_TAG}" >> $GITHUB_OUTPUT
+      shell: bash
