@@ -55,7 +55,7 @@ runs:
     - name: Calculate tag
       id: calculate
       run: |
-        IMAGE_TAGS="${{ steps.parse-git.outputs.tags }}"
+        IMAGE_TAGS="${{ steps.parse-git.outputs.tag }}"
         if [[ "${{ steps.exists.outputs.exists }}" == "true" ]]; then
           CREATE_TAG=false
         else
