@@ -40,7 +40,7 @@ runs:
       with:
         token: ${{ inputs.token }}
 
-    - uses: ./.gha-gmm/actions/ensure-prefix
+    - uses: ./.gha-gmm/actions/ghcr-ensure-prefix
       id: ensure-image
       with:
         image_name: ${{ inputs.image_name }}
