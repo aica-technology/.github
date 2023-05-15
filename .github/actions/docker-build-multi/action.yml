@@ -1,4 +1,4 @@
-name: Build and Push (multi-arch) for GHCR
+name: Build and Push (multi-arch)
 
 inputs:
   image_name:
@@ -11,7 +11,7 @@ inputs:
     type: string
   platforms:
     description: 'The desired build platform(s) as comma-separated list (for example "linux/amd64,linux/arm64")'
-    required: false
+    required: true
     type: string
   build_context_path:
     description: "Path to the directory that specifies the Docker build context"
@@ -27,14 +27,11 @@ inputs:
     description: "Any build flags that should be forwarded to the build process as an array"
     required: false
     type: string
-  token:
-    description: "The GitHub token passed from the caller workflow"
-    required: true
 
 outputs:
   image_hash:
     description: "The SHA of the pushed image"
-    value: ${{ inputs.platforms != '' && steps.buildx.outputs.image_hash || steps.build.outputs.image_hash }}
+    value: ${{ steps.build-push.outputs.image_hash }}
 
 runs:
   using: composite
@@ -46,35 +43,19 @@ runs:
     # as the variable doesn't exist when GitHub resolves it
     - name: Create symlink for actions from this repository
       run: |
-        ln -s ${{ github.action_path }}/../.. .gha-gb
+        ln -s ${{ github.action_path }}/../.. .gha-db
       shell: bash
 
-    - uses: ./.gha-gb/actions/login-to-ghcr
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v2
       with:
-        token: ${{ inputs.token }}
+        platforms: ${{ inputs.platforms }}
 
-    - uses: ./.gha-gb/actions/ghcr-ensure-prefix
-      id: ensure-image
+    - uses: ./.gha-db/actions/docker-build
+      id: build-push
       with:
         image_name: ${{ inputs.image_name }}
-
-    - id: build
-      if: ${{ inputs.platforms == '' }}
-      uses: ./.gha-gb/actions/docker-build
-      with:
-        image_name: ${{ steps.ensure-image.outputs.image_name }}
         image_tags: ${{ inputs.image_tags }}
         build_context_path: ${{ inputs.build_context_path }}
         dockerfile_path: ${{ inputs.dockerfile_path }}
-        build_flags: ${{ inputs.build_flags }}
-
-    - id: buildx
-      if: ${{ inputs.platforms != '' }}
-      uses: ./.gha-gb/actions/docker-build-multi
-      with:
-        image_name: ${{ steps.ensure-image.outputs.image_name }}
-        image_tags: ${{ inputs.image_tags }}
-        platforms: ${{ inputs.platforms }}
-        build_context_path: ${{ inputs.build_context_path }}
-        dockerfile_path: ${{ inputs.dockerfile_path }}
-        build_flags: ${{ inputs.build_flags }}
+        build_flags: ${{ inputs.build_flags }} --platform=${{ inputs.platforms }}

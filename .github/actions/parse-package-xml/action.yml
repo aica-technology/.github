@@ -1,0 +1,34 @@
+name: Parse data from package.xml
+
+inputs:
+  directory:
+    description: "Where the package.xml is stored"
+    required: false
+    default: .
+    type: string
+
+outputs:
+  name:
+    description: "The name extracted from the package.xml"
+    value: ${{ steps.parse.outputs.name }}
+  version:
+    description: "The version extracted from the package.xml"
+    value: ${{ steps.parse.outputs.version }}
+
+runs:
+  using: composite
+  steps:
+    - name: Install xq
+      run: |
+        curl -sSL https://bit.ly/install-xq | sudo bash
+      shell: bash
+    - name: Read package.xml
+      id: parse
+      run: |
+        NAME="$(xq -x //package/name < '${{ inputs.directory }}/package.xml')"
+        VERSION="$(xq -x //package/version < '${{ inputs.directory }}/package.xml')"
+        echo "Name: $NAME"
+        echo "Version: $VERSION"
+        echo "name=$NAME" >> $GITHUB_OUTPUT
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+      shell: bash

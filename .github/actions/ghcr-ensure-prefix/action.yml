@@ -1,0 +1,25 @@
+name: Ensure the image name is correct for GHCR
+
+inputs:
+  image_name:
+    description: 'The name of the image (for example "aica-technology/image-name")'
+    required: true
+    type: string
+
+outputs:
+  image_name:
+    description: "The corrected image name"
+    value: ${{ steps.ensure-image.outputs.image_name }}
+
+runs:
+  using: composite
+  steps:
+    - id: ensure-image
+      name: Ensure the image name is correct
+      run: |
+        IMAGE=${{ inputs.image_name }}
+        if [[ "${IMAGE:0:8}" != "ghcr.io/" ]]; then
+          IMAGE=ghcr.io/${IMAGE}
+        fi
+        echo "image_name=${IMAGE}" >> $GITHUB_OUTPUT
+      shell: bash
