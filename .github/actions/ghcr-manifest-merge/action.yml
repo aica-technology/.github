@@ -9,6 +9,11 @@ inputs:
     description: 'The tags of the image (for example "latest,v1.0.0")'
     required: true
     type: string
+  arch_tag_prefix:
+    description: 'The prefix to add to the arch tag (for example "latest-")'
+    required: false
+    default: ""
+    type: string
   archs:
     description: 'The archs to merge as comma-separated list (for example "amd64,arm64")'
     required: true
@@ -55,9 +60,9 @@ runs:
     - uses: ./.gha-gmm/actions/list-add-suffixes
       id: calculate-images
       with:
-        list: ${{ steps.calculate-inputs.outputs.list }}
+        list: ${{ steps.ensure-image.outputs.image_name }}
         suffixes: ${{ inputs.archs }}
-        glue_separator: "-"
+        glue_separator: ":${{ inputs.arch_tag_prefix }}"
 
     - uses: Noelware/docker-manifest-action@0.3.1
       with:
