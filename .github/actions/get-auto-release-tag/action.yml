@@ -12,6 +12,11 @@ inputs:
   token:
     description: "The GitHub token passed from the caller workflow"
     required: true
+  release_if:
+    description: "The condition to release the image"
+    required: false
+    default: "true"
+    type: string
 
 outputs:
   image_tags:
@@ -49,18 +54,18 @@ runs:
       id: exists
       with:
         image_name: ${{ github.repository }}
-        image_tag: ${{ steps.parse-package.outputs.version }}
+        image_tag: v${{ steps.parse-package.outputs.version }}
         token: ${{ inputs.token }}
 
     - name: Calculate tag
       id: calculate
       run: |
         IMAGE_TAGS="${{ steps.parse-git.outputs.tag }}"
-        if [[ "${{ steps.exists.outputs.exists }}" == "true" ]]; then
+        if [ "${{ steps.exists.outputs.exists }}" == "true" ] || [ "${{ inputs.release_if }}" != "true" ]; then
           CREATE_TAG=false
         else
           CREATE_TAG=true
-          GIT_TAG="${{ steps.parse-package.outputs.version }}"
+          GIT_TAG="v${{ steps.parse-package.outputs.version }}"
           IMAGE_TAGS="${IMAGE_TAGS},${GIT_TAG}"
         fi
         echo "Image tags: ${IMAGE_TAGS}"
