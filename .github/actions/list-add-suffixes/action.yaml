@@ -29,24 +29,26 @@ outputs:
     description: "The list with the suffixes added"
     value: ${{ steps.merge.outputs.list }}
 
-steps:
-  - name: Merge suffix with list
-    id: merge
-    run: |
-      ALIST=()
-      IFS="${{ inputs.list_separator }}" read -ra ITEMS <<< ${{ inputs.list }}
-      for ITEM in "${ITEMS[@]}"
-      do
-        IFS="${{ inputs.suffix_separator }}" read -ra SUFFIXES <<< ${{ inputs.suffixes }}
-        for SUFFIX in "${SUFFIXES[@]}"
+runs:
+  using: composite
+  steps:
+    - name: Merge suffix with list
+      id: merge
+      run: |
+        ALIST=()
+        IFS="${{ inputs.list_separator }}" read -ra ITEMS <<< ${{ inputs.list }}
+        for ITEM in "${ITEMS[@]}"
         do
-          ALIST+=("${ITEM}${SUFFIX}")
+          IFS="${{ inputs.suffix_separator }}" read -ra SUFFIXES <<< ${{ inputs.suffixes }}
+          for SUFFIX in "${SUFFIXES[@]}"
+          do
+            ALIST+=("${ITEM}${SUFFIX}")
+          done
         done
-      done
-      JOINED_LIST="$(IFS="${{ inputs.output_separator }}" ; echo "${ALIST[*]}")"
+        JOINED_LIST="$(IFS="${{ inputs.output_separator }}" ; echo "${ALIST[*]}")"
 
-      echo "Suffixes: ${{ inputs.suffixes }}"
-      echo "In : ${{ inputs.list }}"
-      echo "Out: ${JOINED_LIST}"
-      echo "list=${JOINED_LIST}" >> $GITHUB_OUTPUT
-    shell: bash
+        echo "Suffixes: ${{ inputs.suffixes }}"
+        echo "In : ${{ inputs.list }}"
+        echo "Out: ${JOINED_LIST}"
+        echo "list=${JOINED_LIST}" >> $GITHUB_OUTPUT
+      shell: bash
