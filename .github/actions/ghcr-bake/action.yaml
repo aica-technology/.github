@@ -9,7 +9,11 @@ inputs:
     description: "Any flags to be passed to docker buildx bake"
     required: false
     type: string
-  tags:
+  image_name:
+    description: 'The name of the image (for example "aica-technology/image-name")'
+    required: true
+    type: string
+  image_tags:
     description: 'The tags of the image (for example "latest,v1.0.0")'
     required: false
     default: latest
@@ -45,8 +49,8 @@ runs:
       with:
         # need extra escaping because of the meaning of * in bash,
         # quotes are more awkward due to being used elsewhere and stripped by yaml
-        list: --set \*.tags=
-        suffixes: ${{ inputs.tags }}
+        list: --set \*.tags=${{ inputs.image_name }}
+        suffixes: :${{ inputs.tags }}
         output_separator: " "
 
     - name: build using Bake
