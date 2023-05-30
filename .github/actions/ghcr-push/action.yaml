@@ -39,11 +39,11 @@ runs:
         list: ${{ inputs.image_name }}
         suffixes: ${{ inputs.image_tags }}
         glue_separator: ":"
-        output_separator: " "
 
     - name: Push to GHCR
       run: |
-        for TAG in ${{ steps.calculate-tags.outputs.list }}; do
+        IFS="," read -r -a TAGS <<< "${{ steps.calculate-tags.outputs.result }}"
+        for TAG in "${TAGS[@]}"; do
           docker push "${TAG}"
         done
       shell: bash
