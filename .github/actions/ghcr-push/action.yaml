@@ -1,14 +1,6 @@
-name: Build and Push (multi-arch) for GHCR using buildx bake
+name: Push images to GHCR
 
 inputs:
-  bake_file:
-    description: "Path to the main bake.*.hcl file"
-    required: true
-    type: string
-  bake_flags:
-    description: "Any flags to be passed to docker buildx bake"
-    required: false
-    type: string
   image_name:
     description: 'The name of the image (for example "aica-technology/image-name")'
     required: true
@@ -18,11 +10,6 @@ inputs:
     required: false
     default: latest
     type: string
-  push:
-    description: "Whether to push the image to the registry"
-    required: false
-    default: true
-    type: boolean
   token:
     description: "The GitHub token passed from the caller workflow"
     required: true
@@ -37,38 +24,24 @@ runs:
     # as the variable doesn't exist when GitHub resolves it
     - name: Create symlink for actions from this repository
       run: |
-        ln -s ${{ github.action_path }}/../.. .gha-gbk
+        ln -s ${{ github.action_path }}/../.. .gha-gp
       shell: bash
 
-    - uses: ./.gha-gbk/actions/login-to-ghcr
+    - uses: ./.gha-gp/actions/login-to-ghcr
       with:
         token: ${{ inputs.token }}
-
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v2
-      with:
-        version: v0.10.4 # due to buildx-bake
 
     - uses: ./.gha-gbk/actions/list-add-suffixes
       id: calculate-tags
       with:
         # need extra escaping because of the meaning of * in bash,
         # quotes are more awkward due to being used elsewhere and stripped by yaml
-        list: --set \*.tags=${{ inputs.image_name }}
+        list: ${{ inputs.image_name }}
         suffixes: ${{ inputs.image_tags }}
         glue_separator: ":"
         output_separator: " "
 
-    - name: build using Bake
+    - name: Push to GHCR
       run: |
-        opts=""
-        if [[ "${{ inputs.push }}" == "true" ]]; then
-          opts="--push"
-        fi
-        docker buildx bake \
-          ${{ steps.calculate-tags.outputs.list }} \
-          --file ${{ inputs.bake_file }} \
-          --progress plain \
-          ${opts} \
-          ${{ inputs.bake_flags }}
+        docker push ${{ steps.calculate-tags.outputs.list }}
       shell: bash
