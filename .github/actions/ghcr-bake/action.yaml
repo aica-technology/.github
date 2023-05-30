@@ -10,7 +10,7 @@ inputs:
     required: false
     type: string
   tags:
-    description: "The tags of the image (for example "latest,v1.0.0")"
+    description: 'The tags of the image (for example "latest,v1.0.0")'
     required: false
     default: latest
     type: string
