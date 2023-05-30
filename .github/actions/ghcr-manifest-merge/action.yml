@@ -45,34 +45,20 @@ runs:
       with:
         image_name: ${{ inputs.image_name }}
 
-    - name: Calculate intermediate image names
-      id: calculate-intermediate
-      run: |
-        IMAGE="${{ steps.ensure-image.outputs.image_name }}"
+    - uses: ./.gha-gmm/actions/list-add-suffixes
+      id: calculate-inputs
+      with:
+        list: ${{ steps.ensure-image.outputs.image_name }}
+        suffixes: ${{ inputs.image_tags }}
 
-        INPUTS=()
-        IMAGES=()
-        IFS=',' read -ra TAGS <<< ${{ inputs.image_tags }}
-        for TAG in "${TAGS[@]}"
-        do
-          INPUTS+=("${IMAGE}:${TAG}")
-          IFS=',' read -ra ARCHS <<< ${{ inputs.archs }}
-          for ARCH in "${ARCHS[@]}"
-          do
-            IMAGES+=("${IMAGE}:${TAG}-${ARCH}")
-          done
-        done
-        JOINED_INPUTS="$(IFS=, ; echo "${INPUTS[*]}")"
-        JOINED_IMAGES="$(IFS=, ; echo "${IMAGES[*]}")"
-
-        echo "Inputs: ${JOINED_INPUTS}"
-        echo "Images: ${JOINED_IMAGES}"
-        echo "inputs=${JOINED_INPUTS}" >> $GITHUB_OUTPUT
-        echo "images=${JOINED_IMAGES}" >> $GITHUB_OUTPUT
-      shell: bash
+    - uses: ./.gha-gmm/actions/list-add-suffixes
+      id: calculate-images
+      with:
+        list: ${{ steps.calculate-inputs.outputs.list }}
+        suffixes: ${{ inputs.archs }}
 
     - uses: Noelware/docker-manifest-action@0.3.1
       with:
-        inputs: ${{ steps.calculate-intermediate.outputs.inputs }}
-        images: ${{ steps.calculate-intermediate.outputs.images }}
+        inputs: ${{ steps.calculate-inputs.outputs.list }}
+        images: ${{ steps.calculate-images.outputs.list }}
         push: true

@@ -1,0 +1,52 @@
+name: Add suffixes to each string in a list
+
+inputs:
+  list:
+    description: "A list of string separated by `separator`"
+    required: true
+    type: string
+  list_separator:
+    description: "The separator used to split the `list`"
+    required: false
+    type: string
+    default: ","
+  suffixes:
+    description: "The list of suffixes to add to each string in `list`, separated by `suffix_separator`"
+    required: true
+    type: string
+  suffix_separator:
+    description: "The separator used to split the `suffixes`"
+    required: false
+    type: string
+    default: ","
+  output_separator:
+    description: "The separator used to join the output list"
+    required: false
+    type: string
+    default: ","
+outputs:
+  list:
+    description: "The list with the suffixes added"
+    value: ${{ steps.merge.outputs.list }}
+
+steps:
+  - name: Merge suffix with list
+    id: merge
+    run: |
+      ALIST=()
+      IFS="${{ inputs.list_separator }}" read -ra ITEMS <<< ${{ inputs.list }}
+      for ITEM in "${ITEMS[@]}"
+      do
+        IFS="${{ inputs.suffix_separator }}" read -ra SUFFIXES <<< ${{ inputs.suffixes }}
+        for SUFFIX in "${SUFFIXES[@]}"
+        do
+          ALIST+=("${ITEM}${SUFFIX}")
+        done
+      done
+      JOINED_LIST="$(IFS="${{ inputs.output_separator }}" ; echo "${ALIST[*]}")"
+
+      echo "Suffixes: ${{ inputs.suffixes }}"
+      echo "In : ${{ inputs.list }}"
+      echo "Out: ${JOINED_LIST}"
+      echo "list=${JOINED_LIST}" >> $GITHUB_OUTPUT
+    shell: bash

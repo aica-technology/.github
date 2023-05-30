@@ -1,0 +1,41 @@
+name: Build and Push (multi-arch) for GHCR using buildx bake
+
+inputs:
+  bake_file:
+    description: "Path to the main bake.*.hcl file"
+    required: true
+    type: string
+  bake_flags:
+    description: "Any flags to be passed to docker buildx bake"
+    required: false
+    type: string
+  token:
+    description: "The GitHub token passed from the caller workflow"
+    required: true
+
+runs:
+  using: composite
+  steps:
+    # When using a composite action from another repo,
+    # there is no canonical way to call other composite actions from that same repo
+    # so we make a symlink to the repo's .github folder so that local `uses: ./` can work
+    # Note: using ${{ github.action_path }} in a `uses:` does not work
+    # as the variable doesn't exist when GitHub resolves it
+    - name: Create symlink for actions from this repository
+      run: |
+        ln -s ${{ github.action_path }}/../.. .gha-gbk
+      shell: bash
+
+    - uses: ./.gha-gbk/actions/login-to-ghcr
+      with:
+        token: ${{ inputs.token }}
+
+    - name: build using Bake
+      run: |
+        docker buildx bake \
+          --push \
+          --set *.tags=${{ steps.merge-tags.outputs.list }} \
+          --file ${{ inputs.bake_file }} \
+          ${{ inputs.bake_flags }} \
+          --progress plain
+      shell: bash

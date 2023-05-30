@@ -32,24 +32,34 @@ outputs:
 runs:
   using: composite
   steps:
+    # When using a composite action from another repo,
+    # there is no canonical way to call other composite actions from that same repo
+    # so we make a symlink to the repo's .github folder so that local `uses: ./` can work
+    # Note: using ${{ github.action_path }} in a `uses:` does not work
+    # as the variable doesn't exist when GitHub resolves it
+    - name: Create symlink for actions from this repository
+      run: |
+        ln -s ${{ github.action_path }}/../.. .gha-db
+      shell: bash
+
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v2
       with:
         version: v0.10.4 # due to --provenance
 
+    - uses: ./.gha-db/actions/list-add-suffixes
+      id: calculate-images
+      with:
+        list: -t ${{ inputs.image_name }}
+        suffixes: ${{ inputs.image_tags }}
+        output_separator: " "
+
     - id: build-push
       name: Build and push image
       run: |
-        IMAGES=()
-        IMAGE=${{ inputs.image_name }}
-        IFS=',' read -ra TAGS <<< ${{ inputs.image_tags }}
-        for TAG in "${TAGS[@]}"
-        do
-          IMAGES+=(-t ${IMAGE}:${TAG})
-        done
         docker buildx build --file ${{ inputs.dockerfile_path }} \
           ${{ inputs.build_flags }} \
-          --push --provenance=false --sbom=false ${IMAGES[@]} \
+          --push --provenance=false --sbom=false ${{ steps.calculate-images.outputs.list }} \
           ${{ inputs.build_context_path }}
         SHA=$(docker buildx imagetools inspect ${IMAGE}:${TAG} | grep Digest)
         echo "sha=${SHA##*sha256:}" >> $GITHUB_OUTPUT
