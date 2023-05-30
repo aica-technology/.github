@@ -19,6 +19,11 @@ inputs:
     required: false
     type: string
     default: ","
+  glue_separator:
+    description: "The separator used to join the `list` elements to the `suffixes`"
+    required: false
+    type: string
+    default: ""
   output_separator:
     description: "The separator used to join the output list"
     required: false
@@ -42,7 +47,7 @@ runs:
           IFS="${{ inputs.suffix_separator }}" read -ra SUFFIXES <<< '${{ inputs.suffixes }}'
           for SUFFIX in "${SUFFIXES[@]}"
           do
-            ALIST+=("${ITEM}${SUFFIX}")
+            ALIST+=("${ITEM}${{ inputs.glue_separator }}${SUFFIX}")
           done
         done
         JOINED_LIST="$(IFS="${{ inputs.output_separator }}" ; echo "${ALIST[*]}")"

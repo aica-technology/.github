@@ -52,6 +52,7 @@ runs:
       with:
         list: -t ${{ inputs.image_name }}
         suffixes: ${{ inputs.image_tags }}
+        glue_separator: ":"
         output_separator: " "
 
     - id: build-push

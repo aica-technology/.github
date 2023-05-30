@@ -49,8 +49,9 @@ runs:
       with:
         # need extra escaping because of the meaning of * in bash,
         # quotes are more awkward due to being used elsewhere and stripped by yaml
-        list: '--set \*.tags=${{ inputs.image_name }}:'
+        list: --set \*.tags=${{ inputs.image_name }}
         suffixes: ${{ inputs.image_tags }}
+        glue_separator: ":"
         output_separator: " "
 
     - name: build using Bake

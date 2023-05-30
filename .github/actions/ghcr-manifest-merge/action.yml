@@ -50,12 +50,14 @@ runs:
       with:
         list: ${{ steps.ensure-image.outputs.image_name }}
         suffixes: ${{ inputs.image_tags }}
+        glue_separator: ":"
 
     - uses: ./.gha-gmm/actions/list-add-suffixes
       id: calculate-images
       with:
         list: ${{ steps.calculate-inputs.outputs.list }}
         suffixes: ${{ inputs.archs }}
+        glue_separator: "-"
 
     - uses: Noelware/docker-manifest-action@0.3.1
       with:
