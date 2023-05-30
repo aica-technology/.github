@@ -36,10 +36,10 @@ runs:
       id: merge
       run: |
         ALIST=()
-        IFS="${{ inputs.list_separator }}" read -ra ITEMS <<< ${{ inputs.list }}
+        IFS="${{ inputs.list_separator }}" read -ra ITEMS <<< '${{ inputs.list }}'
         for ITEM in "${ITEMS[@]}"
         do
-          IFS="${{ inputs.suffix_separator }}" read -ra SUFFIXES <<< ${{ inputs.suffixes }}
+          IFS="${{ inputs.suffix_separator }}" read -ra SUFFIXES <<< '${{ inputs.suffixes }}'
           for SUFFIX in "${SUFFIXES[@]}"
           do
             ALIST+=("${ITEM}${SUFFIX}")
