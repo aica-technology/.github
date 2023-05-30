@@ -43,5 +43,7 @@ runs:
 
     - name: Push to GHCR
       run: |
-        docker push ${{ steps.calculate-tags.outputs.list }}
+        for TAG in ${{ steps.calculate-tags.outputs.list }}; do
+          docker push "${TAG}"
+        done
       shell: bash
