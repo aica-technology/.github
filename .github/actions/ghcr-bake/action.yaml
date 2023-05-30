@@ -69,6 +69,7 @@ runs:
           ${{ steps.calculate-tags.outputs.list }} \
           --file ${{ inputs.bake_file }} \
           --progress plain \
+          --provenance=false --sbom=false \
           ${opts} \
           ${{ inputs.bake_flags }}
       shell: bash
