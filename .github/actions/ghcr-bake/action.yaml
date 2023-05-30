@@ -43,7 +43,9 @@ runs:
     - uses: ./.gha-gbk/actions/list-add-suffixes
       id: calculate-tags
       with:
-        list: --set \\*.tags=
+        # need extra escaping because of the meaning of * in bash,
+        # quotes are more awkward due to being used elsewhere and stripped by yaml
+        list: --set \*.tags=
         suffixes: ${{ inputs.tags }}
         output_separator: " "
 
