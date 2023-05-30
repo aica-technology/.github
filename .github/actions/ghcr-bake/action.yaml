@@ -9,6 +9,11 @@ inputs:
     description: "Any flags to be passed to docker buildx bake"
     required: false
     type: string
+  tags:
+    description: "The tags of the image (for example "latest,v1.0.0")"
+    required: false
+    default: latest
+    type: string
   token:
     description: "The GitHub token passed from the caller workflow"
     required: true
@@ -34,7 +39,7 @@ runs:
       run: |
         docker buildx bake \
           --push \
-          --set *.tags=${{ steps.merge-tags.outputs.list }} \
+          --set *.tags=${{ inputs.tags }} \
           --file ${{ inputs.bake_file }} \
           ${{ inputs.bake_flags }} \
           --progress plain
