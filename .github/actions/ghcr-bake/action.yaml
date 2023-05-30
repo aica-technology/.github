@@ -43,7 +43,7 @@ runs:
     - uses: ./.gha-gbk/actions/list-add-suffixes
       id: calculate-tags
       with:
-        list: --set \'*.tags=\'
+        list: --set \\*.tags=
         suffixes: ${{ inputs.tags }}
         output_separator: " "
 
