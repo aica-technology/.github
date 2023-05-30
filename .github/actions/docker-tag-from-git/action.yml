@@ -17,14 +17,16 @@ runs:
         # <branch> if it's a branch (and replace / with -)
         GITHUB_REFER="${{ github.ref }}"
         BRANCH="${{ github.ref_name }}"
+        RUN="${{ github.run_number }}"
         if [[ "${BRANCH}" == "develop" ]]; then
-          TAG="develop-${{ github.run_number }}"
+          TAG="develop,develop-${RUN}"
         elif [[ "${BRANCH}" == "main" ]]; then
-          TAG=latest
+          TAG="latest,main-${RUN}"
         elif [[ "${GITHUB_REFER}" == "refs/tags/"* ]]; then
           TAG="${GITHUB_REFER#refs/tags/}"
         else
-          TAG="${BRANCH//\//-}"
+          BRANCH_SAFE="${BRANCH//\//-}"
+          TAG="${BRANCH_SAFE},${BRANCH_SAFE}-${RUN}"
         fi
         echo "Tag: ${TAG}"
         echo "tag=${TAG}" >> $GITHUB_OUTPUT
