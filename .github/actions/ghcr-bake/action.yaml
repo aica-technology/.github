@@ -40,7 +40,7 @@ runs:
       with:
         version: v0.10.4 # due to buildx-bake
 
-    - uses: ./.gha-db/actions/list-add-suffixes
+    - uses: ./.gha-gbk/actions/list-add-suffixes
       id: calculate-tags
       with:
         list: --set *.tags=
