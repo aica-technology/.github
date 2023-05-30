@@ -11,14 +11,20 @@ runs:
     - name: Pick a tag
       id: pick
       run: |
+        # develop-<run_number> if it's develop
+        # latest if it's main
+        # <tag> if it's a tag
+        # <branch> if it's a branch (and replace / with -)
         GITHUB_REFER="${{ github.ref }}"
         BRANCH="${{ github.ref_name }}"
         if [[ "${BRANCH}" == "develop" ]]; then
           TAG="develop-${{ github.run_number }}"
         elif [[ "${BRANCH}" == "main" ]]; then
           TAG=latest
+        elif [[ "${GITHUB_REFER}" == "refs/tags/"* ]]; then
+          TAG="${GITHUB_REFER#refs/tags/}"
         else
-          TAG="${GITHUB_REFER#refs/*/}"
+          TAG="${BRANCH//\//-}"
         fi
         echo "Tag: ${TAG}"
         echo "tag=${TAG}" >> $GITHUB_OUTPUT
