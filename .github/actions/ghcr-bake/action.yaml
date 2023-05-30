@@ -40,11 +40,18 @@ runs:
       with:
         version: v0.10.4 # due to buildx-bake
 
+    - uses: ./.gha-db/actions/list-add-suffixes
+      id: calculate-tags
+      with:
+        list: --set *.tags=
+        suffixes: ${{ inputs.tags }}
+        output_separator: " "
+
     - name: build using Bake
       run: |
         docker buildx bake \
           --push \
-          --set *.tags=${{ inputs.tags }} \
+          ${{ steps.calculate-tags.outputs.list }}
           --file ${{ inputs.bake_file }} \
           ${{ inputs.bake_flags }} \
           --progress plain
