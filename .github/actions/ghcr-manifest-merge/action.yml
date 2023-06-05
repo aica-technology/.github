@@ -45,34 +45,24 @@ runs:
       with:
         image_name: ${{ inputs.image_name }}
 
-    - name: Calculate intermediate image names
-      id: calculate-intermediate
-      run: |
-        IMAGE="${{ steps.ensure-image.outputs.image_name }}"
-
-        INPUTS=()
-        IMAGES=()
-        IFS=',' read -ra TAGS <<< ${{ inputs.image_tags }}
-        for TAG in "${TAGS[@]}"
-        do
-          INPUTS+=("${IMAGE}:${TAG}")
-          IFS=',' read -ra ARCHS <<< ${{ inputs.archs }}
-          for ARCH in "${ARCHS[@]}"
-          do
-            IMAGES+=("${IMAGE}:${TAG}-${ARCH}")
-          done
-        done
-        JOINED_INPUTS="$(IFS=, ; echo "${INPUTS[*]}")"
-        JOINED_IMAGES="$(IFS=, ; echo "${IMAGES[*]}")"
-
-        echo "Inputs: ${JOINED_INPUTS}"
-        echo "Images: ${JOINED_IMAGES}"
-        echo "inputs=${JOINED_INPUTS}" >> $GITHUB_OUTPUT
-        echo "images=${JOINED_IMAGES}" >> $GITHUB_OUTPUT
-      shell: bash
-
-    - uses: Noelware/docker-manifest-action@0.3.1
+    - uses: ./.gha-gmm/actions/list-add-suffixes
+      id: calculate-images
       with:
-        inputs: ${{ steps.calculate-intermediate.outputs.inputs }}
-        images: ${{ steps.calculate-intermediate.outputs.images }}
-        push: true
+        list: ${{ steps.ensure-image.outputs.image_name }}
+        suffixes: ${{ inputs.image_tags }}
+        glue_separator: ":"
+
+    - name: Create manifests
+      run: |
+        IFS=',' read -ra IMAGES <<< '${{ steps.calculate-images.outputs.list }}'
+        for IMAGE in "${IMAGES[@]}"; do
+          PARTS=()
+          IFS=',' read -ra ARCHS <<< '${{ inputs.archs }}'
+          for ARCH in "${ARCHS[@]}"; do
+            PARTS+=("${IMAGE}-${ARCH}")
+          done
+          echo "Creating manifest for ${IMAGE} with parts ${PARTS[@]}"
+          docker manifest create "${IMAGE}" ${PARTS[@]}
+          docker manifest push "${IMAGE}"
+        done
+      shell: bash

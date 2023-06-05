@@ -1,0 +1,47 @@
+name: Push images to GHCR
+
+inputs:
+  image_name:
+    description: 'The name of the image (for example "aica-technology/image-name")'
+    required: true
+    type: string
+  image_tags:
+    description: 'The tags of the image (for example "latest,v1.0.0")'
+    required: false
+    default: latest
+    type: string
+  token:
+    description: "The GitHub token passed from the caller workflow"
+    required: true
+
+runs:
+  using: composite
+  steps:
+    # When using a composite action from another repo,
+    # there is no canonical way to call other composite actions from that same repo
+    # so we make a symlink to the repo's .github folder so that local `uses: ./` can work
+    # Note: using ${{ github.action_path }} in a `uses:` does not work
+    # as the variable doesn't exist when GitHub resolves it
+    - name: Create symlink for actions from this repository
+      run: |
+        ln -s ${{ github.action_path }}/../.. .gha-gp
+      shell: bash
+
+    - uses: ./.gha-gp/actions/login-to-ghcr
+      with:
+        token: ${{ inputs.token }}
+
+    - uses: ./.gha-gbk/actions/list-add-suffixes
+      id: calculate-tags
+      with:
+        list: ${{ inputs.image_name }}
+        suffixes: ${{ inputs.image_tags }}
+        glue_separator: ":"
+
+    - name: Push to GHCR
+      run: |
+        IFS="," read -r -a TAGS <<< "${{ steps.calculate-tags.outputs.result }}"
+        for TAG in "${TAGS[@]}"; do
+          docker push "${TAG}"
+        done
+      shell: bash
