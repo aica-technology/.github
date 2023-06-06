@@ -24,11 +24,6 @@ inputs:
     required: false
     type: string
 
-outputs:
-  image_hash:
-    description: "The SHA of the pushed image"
-    value: ${{ steps.build-push.outputs.sha }}
-
 runs:
   using: composite
   steps:
@@ -62,6 +57,4 @@ runs:
           ${{ inputs.build_flags }} \
           --push --provenance=false --sbom=false ${{ steps.calculate-images.outputs.list }} \
           ${{ inputs.build_context_path }}
-        SHA=$(docker buildx imagetools inspect ${IMAGE}:${TAG} | grep Digest)
-        echo "sha=${SHA##*sha256:}" >> $GITHUB_OUTPUT
       shell: bash
