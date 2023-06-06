@@ -28,11 +28,6 @@ inputs:
     required: false
     type: string
 
-outputs:
-  image_hash:
-    description: "The SHA of the pushed image"
-    value: ${{ steps.build-push.outputs.image_hash }}
-
 runs:
   using: composite
   steps:

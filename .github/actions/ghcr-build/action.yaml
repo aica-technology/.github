@@ -31,11 +31,6 @@ inputs:
     description: "The GitHub token passed from the caller workflow"
     required: true
 
-outputs:
-  image_hash:
-    description: "The SHA of the pushed image"
-    value: ${{ inputs.platforms != '' && steps.buildx.outputs.image_hash || steps.build.outputs.image_hash }}
-
 runs:
   using: composite
   steps:
