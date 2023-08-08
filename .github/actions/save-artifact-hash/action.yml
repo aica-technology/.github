@@ -10,13 +10,6 @@ inputs:
     required: true
     type: string
 
-  steps:
-    - run: |
-        echo ${{ needs.check-hash.outputs.hash }} > hash.txt
-    - uses: actions/upload-artifact@v3
-      with:
-        name: ${{ needs.check-hash.outputs.artifact_name }}
-        path: hash.txt
 runs:
   using: composite
   steps:
