@@ -1,0 +1,33 @@
+name: Push a git tag for the current build
+
+inputs:
+  tag:
+    description: "The git tag to create"
+    required: true
+    type: string
+
+runs:
+  using: composite
+  steps:
+    - name: Checkout test
+      id: checkout-test
+      run: |
+        GIT_CHECKOUT=false
+        if [ ! -d .git ]; then
+          GIT_CHECKOUT=true
+        fi
+        echo "Git checkout: $GIT_CHECKOUT"
+        echo "checkout=$GIT_CHECKOUT" >> $GITHUB_OUTPUT
+      shell: bash
+
+    - uses: actions/checkout@v3
+      if: steps.checkout-test.outputs.checkout == 'true'
+
+    - name: Create tag
+      run: |
+        git config --global user.name github-actions[bot]
+        git config --global user.email github-actions[bot]@users.noreply.github.com
+
+        git tag "${{ inputs.tag }}"
+        git push origin "${{ inputs.tag }}"
+      shell: bash
