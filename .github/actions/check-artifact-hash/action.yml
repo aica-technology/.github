@@ -11,7 +11,7 @@ outputs:
     description: "The name of the generated artifact"
     value: ${{ steps.parse.outputs.artifact_name }}
   needs_rebuild:
-    description: "Does the package needs to be rebuilt?"
+    description: "Does the package need to be rebuilt?"
     value: ${{ steps.compare.outputs.rebuild }}
   hash:
     description: "The hash to be saved as artifact"
@@ -49,6 +49,7 @@ runs:
           echo "rebuild=false" >> $GITHUB_OUTPUT
           echo "hash=${PREVIOUS}" >> $GITHUB_OUTPUT
         else
+          echo "New build required"
           echo "rebuild=true" >> $GITHUB_OUTPUT
           echo "hash=${CURRENT}" >> $GITHUB_OUTPUT
         fi
