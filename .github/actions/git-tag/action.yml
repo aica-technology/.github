@@ -23,8 +23,17 @@ runs:
     - uses: actions/checkout@v3
       if: steps.checkout-test.outputs.checkout == 'true'
 
-    - name: Create tag
+    - name: Create tag it doesn't exist
       run: |
+        TAG="$(git ls-remote origin refs/tags/${{ inputs.tag }})"
+
+        if [ -z "$TAG" ]; then
+          echo "Tag already exists, skipping"
+          exit 0
+        fi
+
+        echo "Tag doesn't exist, creating"
+
         git config --global user.name github-actions[bot]
         git config --global user.email github-actions[bot]@users.noreply.github.com
 
