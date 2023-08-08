@@ -27,6 +27,7 @@ runs:
       run: |
         TAG="$(git ls-remote origin refs/tags/${{ inputs.tag }})"
 
+        echo "Tag: $TAG"
         if [ -z "$TAG" ]; then
           echo "Tag already exists, skipping"
           exit 0
