@@ -52,3 +52,4 @@ runs:
           echo "rebuild=true" >> $GITHUB_OUTPUT
           echo "hash=${CURRENT}" >> $GITHUB_OUTPUT
         fi
+      shell: bash
