@@ -1,0 +1,56 @@
+name: Check the Git hash in an artifact if it exists
+
+inputs:
+  package_path:
+    description: 'The path to the package for which the artifact should be checked'
+    required: true
+    type: string
+
+outputs:
+  artifact_name:
+    description: "The name of the generated artifact"
+    value: ${{ steps.parse.outputs.artifact_name }}
+  needs_rebuild:
+    description: "Does the package need to be rebuilt?"
+    value: ${{ steps.compare.outputs.rebuild }}
+  hash:
+    description: "The hash to be saved as artifact"
+    value: ${{ steps.compare.outputs.hash }}
+
+runs:
+  using: composite
+  steps:
+    - id: parse
+      name: Parse artifact name
+      run: |
+        COMP_PATH=${{ inputs.package_path }}
+        COMP_PATH=${COMP_PATH//\//_}
+        echo "artifact_name=${COMP_PATH:2}" >> $GITHUB_OUTPUT
+      shell: bash
+
+    - uses: dawidd6/action-download-artifact@v2
+      with:
+        workflow: build-release.yaml
+        workflow_conclusion: success
+        branch: ${{ github.ref_name }}
+        name: ${{ steps.parse.outputs.artifact_name }}
+        if_no_artifact_found: warn
+
+    - id: compare
+      name: Compare hashes
+      run: |
+        PREVIOUS=""
+        if test -e hash.txt; then
+          PREVIOUS="$(cat hash.txt)"
+        fi
+        CURRENT="$(git log -n 1 --pretty=format:%H ${{ inputs.package_path }})"
+        if [[ "${PREVIOUS}" == "${CURRENT}" ]]; then
+          echo "Skipping build"
+          echo "rebuild=false" >> $GITHUB_OUTPUT
+          echo "hash=${PREVIOUS}" >> $GITHUB_OUTPUT
+        else
+          echo "New build required"
+          echo "rebuild=true" >> $GITHUB_OUTPUT
+          echo "hash=${CURRENT}" >> $GITHUB_OUTPUT
+        fi
+      shell: bash
