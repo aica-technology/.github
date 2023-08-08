@@ -1,0 +1,31 @@
+name: Save a Git hash in an artifact
+
+inputs:
+  artifact_name:
+    description: "The name of the artifact to be generated"
+    required: true
+    type: string
+  hash:
+    description: "The hash to be saved as artifact"
+    required: true
+    type: string
+
+  steps:
+    - run: |
+        echo ${{ needs.check-hash.outputs.hash }} > hash.txt
+    - uses: actions/upload-artifact@v3
+      with:
+        name: ${{ needs.check-hash.outputs.artifact_name }}
+        path: hash.txt
+runs:
+  using: composite
+  steps:
+    - name: Write hash to file
+      run: |
+        echo ${{ inputs.hash }} > hash.txt
+      shell: bash
+
+    - uses: actions/upload-artifact@v3
+      with:
+        name: ${{ inputs.artifact_name }}
+        path: hash.txt
