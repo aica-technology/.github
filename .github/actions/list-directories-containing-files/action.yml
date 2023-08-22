@@ -1,0 +1,32 @@
+name: List directories containing a given set of files
+
+inputs:
+  files:
+    description: "An array containing the desired files or file patters"
+    required: true
+
+outputs:
+  directories:
+    description: "An JSON formatted string containing the list of directories"
+    value: ${{ steps.list.outputs.directories }}
+
+runs:
+  using: composite
+  steps:
+    - id: list
+      name: List directories
+      run: |
+        FILES=${{ inputs.files }}
+        FIND_FILES=""
+        for FILE in "${FILES[@]}"; do
+          if [ -z "${FIND_FILES}" ]; then
+            FIND_FILES='[ -f "$0"/'"${FILE}"' ]'
+          else
+            FIND_FILES="${FIND_FILES}"' && [ -f "$0"/'"${FILE}"' ]'
+          fi
+        done
+        ITEMS_LIST="$(find . -type d -exec sh -c "${FIND_FILES}" '{}' \; -print)"
+        AWK_PROGRAM='BEGIN { printf "[" } { if (NR != 1) { printf "," } ; printf "\""$0"\"" } END { print "]" }'
+        ITEMS="$(echo "$ITEMS_LIST" | awk "$AWK_PROGRAM")"
+        echo "directories=${ITEMS}" >> $GITHUB_OUTPUT
+      shell: bash
