@@ -1,0 +1,74 @@
+name: Push images to the production ECR
+
+inputs:
+  image_name:
+    description: 'The name of the image (for example "aica-technology/image-name")'
+    required: true
+    type: string
+  image_tags:
+    description: 'The tags of the image (for example "latest,v1.0.0")'
+    required: true
+    type: string
+  archs:
+    description: 'The archs to merge as comma-separated list (for example "amd64,arm64")'
+    required: true
+    type: string
+  token:
+    description: "The GitHub token passed from the caller workflow"
+    required: true
+    type: string
+  ecr_name:
+    description: "The name of the target ECR"
+    required: true
+    type: string
+
+runs:
+  using: composite
+  steps:
+    # When using a composite action from another repo,
+    # there is no canonical way to call other composite actions from that same repo
+    # so we make a symlink to the repo's .github folder so that local `uses: ./` can work
+    # Note: using ${{ github.action_path }} in a `uses:` does not work
+    # as the variable doesn't exist when GitHub resolves it
+    - name: Create symlink for actions from this repository
+      run: |
+        ln -s ${{ github.action_path }}/../.. .gha-gmm
+      shell: bash
+
+    - uses: ./.gha-gmm/actions/login-to-ghcr
+      with:
+        token: ${{ inputs.token }}
+
+    - uses: ./.gha-gmm/actions/ghcr-ensure-prefix
+      id: ensure-image
+      with:
+        image_name: ${{ inputs.image_name }}
+
+    - uses: ./.gha-gmm/actions/list-add-suffixes
+      id: calculate-images
+      with:
+        list: ${{ steps.ensure-image.outputs.image_name }}
+        suffixes: ${{ inputs.image_tags }}
+        glue_separator: ":"
+
+    - name: Create manifests
+      run: |
+        aws ecr get-login-password --region eu-central-1 | docker login --username AWS --password-stdin 336280353617.dkr.ecr.eu-central-1.amazonaws.com
+        IFS=',' read -ra IMAGES <<< '${{ steps.calculate-images.outputs.list }}'
+        for IMAGE in "${IMAGES[@]}"; do
+          PARTS=()
+          MANIFEST=()
+          IFS=',' read -ra ARCHS <<< '${{ inputs.archs }}'
+          for ARCH in "${ARCHS[@]}"; do
+            PARTS+=("${IMAGE}-${ARCH}")
+            echo "Pushing ${IMAGE}-${ARCH} to ${{ inputs.ecr_name }}"
+            docker tag ${IMAGE}-${ARCH} 336280353617.dkr.ecr.eu-central-1.amazonaws.com/${inputs.ecr_name}:${inputs.image_tags}-${ARCH}
+            docker push 336280353617.dkr.ecr.eu-central-1.amazonaws.com/${inputs.ecr_name}:${inputs.image_tags}-${ARCH}
+            MANIFEST+=(336280353617.dkr.ecr.eu-central-1.amazonaws.com/${inputs.ecr_name}:${inputs.image_tags}-${ARCH})
+          done
+          echo "Creating manifest for ${IMAGE} with parts ${PARTS[@]}"
+          echo "Manifest ${MANIFEST[@]}"
+          docker manifest create 336280353617.dkr.ecr.eu-central-1.amazonaws.com/${inputs.ecr_name}:${inputs.image_tags} ${MANIFEST[@]}
+          docker manifest push 336280353617.dkr.ecr.eu-central-1.amazonaws.com/${inputs.ecr_name}:${inputs.image_tags}
+        done
+      shell: bash
