@@ -1,13 +1,13 @@
 name: Check package version update
 
 inputs:
-  package-path:
+  package_path:
     description: "The path of the directory that contains the package.xml file"
     required: false
     type: string
 
 outputs:
-  has-changed:
+  has_changed:
     description: "Has the package version changed?"
     value: ${{ steps.check.outputs.changed }}
   version:
