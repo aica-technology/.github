@@ -25,11 +25,6 @@ inputs:
 runs:
   using: composite
   steps:
-    # When using a composite action from another repo,
-    # there is no canonical way to call other composite actions from that same repo
-    # so we make a symlink to the repo's .github folder so that local `uses: ./` can work
-    # Note: using ${{ github.action_path }} in a `uses:` does not work
-    # as the variable doesn't exist when GitHub resolves it
     - name: Create symlink for actions from this repository
       run: |
         ln -s ${{ github.action_path }}/../.. .gha-gmm
@@ -51,6 +46,12 @@ runs:
         suffixes: ${{ inputs.image_tags }}
         glue_separator: ":"
 
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v3
+      with:
+        role-to-assume: arn:aws:iam::336280353617:role/github-actions-role
+        aws-region: eu-central-1
+
     - name: Create manifests
       run: |
         aws ecr get-login-password --region eu-central-1 | docker login --username AWS --password-stdin 336280353617.dkr.ecr.eu-central-1.amazonaws.com
@@ -61,14 +62,17 @@ runs:
           IFS=',' read -ra ARCHS <<< '${{ inputs.archs }}'
           for ARCH in "${ARCHS[@]}"; do
             PARTS+=("${IMAGE}-${ARCH}")
-            echo "Pushing ${IMAGE}-${ARCH} to ${{ inputs.ecr_name }}"
-            docker tag ${IMAGE}-${ARCH} 336280353617.dkr.ecr.eu-central-1.amazonaws.com/${inputs.ecr_name}:${inputs.image_tags}-${ARCH}
-            docker push 336280353617.dkr.ecr.eu-central-1.amazonaws.com/${inputs.ecr_name}:${inputs.image_tags}-${ARCH}
-            MANIFEST+=(336280353617.dkr.ecr.eu-central-1.amazonaws.com/${inputs.ecr_name}:${inputs.image_tags}-${ARCH})
+            echo "Pull ${IMAGE}-${ARCH}"
+            docker pull "${IMAGE}-${ARCH}"
+            echo "Tag ${IMAGE}-${ARCH}"
+            docker tag "${IMAGE}-${ARCH}" 336280353617.dkr.ecr.eu-central-1.amazonaws.com/${{inputs.ecr_name}}:${{inputs.image_tags}}-"${ARCH}"
+            echo "Push ${IMAGE}-${ARCH} to ${{ inputs.ecr_name }}"
+            docker push 336280353617.dkr.ecr.eu-central-1.amazonaws.com/${{inputs.ecr_name}}:${{inputs.image_tags}}-"${ARCH}"
+            MANIFEST+=(336280353617.dkr.ecr.eu-central-1.amazonaws.com/${{inputs.ecr_name}}:${{inputs.image_tags}}-"${ARCH}")
           done
           echo "Creating manifest for ${IMAGE} with parts ${PARTS[@]}"
           echo "Manifest ${MANIFEST[@]}"
-          docker manifest create 336280353617.dkr.ecr.eu-central-1.amazonaws.com/${inputs.ecr_name}:${inputs.image_tags} ${MANIFEST[@]}
-          docker manifest push 336280353617.dkr.ecr.eu-central-1.amazonaws.com/${inputs.ecr_name}:${inputs.image_tags}
+          docker manifest create 336280353617.dkr.ecr.eu-central-1.amazonaws.com/${{inputs.ecr_name}}:${{inputs.image_tags}} "${MANIFEST[@]}"
+          docker manifest push 336280353617.dkr.ecr.eu-central-1.amazonaws.com/${{inputs.ecr_name}}:${{inputs.image_tags}}
         done
       shell: bash
