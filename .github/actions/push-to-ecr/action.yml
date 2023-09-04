@@ -27,19 +27,19 @@ runs:
   steps:
     - name: Create symlink for actions from this repository
       run: |
-        ln -s ${{ github.action_path }}/../.. .gha-gmm
+        ln -s ${{ github.action_path }}/../.. .gha-p2e
       shell: bash
 
-    - uses: ./.gha-gmm/actions/login-to-ghcr
+    - uses: ./.gha-p2e/actions/login-to-ghcr
       with:
         token: ${{ inputs.token }}
 
-    - uses: ./.gha-gmm/actions/ghcr-ensure-prefix
+    - uses: ./.gha-p2e/actions/ghcr-ensure-prefix
       id: ensure-image
       with:
         image_name: ${{ inputs.image_name }}
 
-    - uses: ./.gha-gmm/actions/list-add-suffixes
+    - uses: ./.gha-p2e/actions/list-add-suffixes
       id: calculate-images
       with:
         list: ${{ steps.ensure-image.outputs.image_name }}
@@ -52,6 +52,7 @@ runs:
         role-to-assume: arn:aws:iam::336280353617:role/github-actions-role
         aws-region: eu-central-1
 
+    # FIXME: Split the logic in multiple stages (login, pull, push) (could be revamped into a ghcr-manifest-merge)
     - name: Create manifests
       run: |
         aws ecr get-login-password --region eu-central-1 | docker login --username AWS --password-stdin 336280353617.dkr.ecr.eu-central-1.amazonaws.com
