@@ -58,7 +58,7 @@ runs:
         directory: /tmp/
     
     - name: Parse version of current commit
-      id: parse-base-version
+      id: parse-new-version
       uses: ./.chk-vrs/actions/parse-package-xml
       with:
         directory: ${{ inputs.package-path }}
@@ -76,27 +76,27 @@ runs:
         read base_major base_minor base_patch < <(echo $BASE_VERSION | ( IFS=".$IFS" ; read a b c && echo $a $b $c ))
         read new_major new_minor new_patch < <(echo $NEW_VERSION | ( IFS=".$IFS" ; read a b c && echo $a $b $c ))
         if [ "${new_major}" -lt "${base_major}" ]; then
-          echo "Major version cannot decrease"
+          echo "::error file=package.xml::The major version has been downgraded"
           exit 1
         elif [ "${new_major}" -gt "${base_major}" ]; then
           echo "Major version increment"
           if [ ! "${new_minor}" -eq 0 ] || [ ! "${new_patch}" -eq 0 ]; then
-            echo "Error, expected minor and patch versions to be 0"
+            echo "::error file=package.xml::Expected minor and patch versions to be 0"
             exit 1
           fi
         else
           if [ "${new_minor}" -lt "${base_minor}" ]; then
-            echo "Minor version cannot decrease"
+            echo "::error file=package.xml::The minor version has been downgraded"
             exit 1
           elif [ "${new_minor}" -gt "${base_minor}" ]; then
             echo "Minor version increment"
             if [ ! "${new_patch}" -eq 0 ]; then
-              echo "Error, expected patch version to be 0"
+              echo "::error file=package.xml::Expected patch versions to be 0"
               exit 1
             fi
           else
             if [ "${new_patch}" -lt "${base_patch}" ]; then
-              echo "Patch version cannot decrease"
+              echo "::error file=package.xml::The patch version has been downgraded"
               exit 1
             else
               echo "Patch version increment"
