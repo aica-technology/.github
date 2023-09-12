@@ -1,0 +1,108 @@
+name: Check package version update
+
+inputs:
+  package_path:
+    description: "The path of the directory that contains the package.xml file"
+    required: false
+    type: string
+
+outputs:
+  has_changed:
+    description: "Has the package version changed?"
+    value: ${{ steps.check.outputs.changed }}
+  version:
+    description: "The current version of the package"
+    value: ${{ steps.parse-new-version.outputs.version }}
+
+runs:
+  using: composite
+  steps:
+    - name: Checkout test
+      id: checkout-test
+      run: |
+        GIT_CHECKOUT=false
+        if [ ! -d .git ]; then
+          GIT_CHECKOUT=true
+        else
+          git fetch --depth 2
+        fi
+        echo "Git checkout: $GIT_CHECKOUT"
+        echo "checkout=$GIT_CHECKOUT" >> $GITHUB_OUTPUT
+      shell: bash
+
+    - name: Checkout repository
+      if: steps.checkout-test.outputs.checkout == 'true'
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 2
+    
+    # When using a composite action from another repo,
+    # there is no canonical way to call other composite actions from that same repo
+    # so we make a symlink to the repo's .github folder so that local `uses: ./` can work
+    # Note: using ${{ github.action_path }} in a `uses:` does not work
+    # as the variable doesn't exist when GitHub resolves it
+    - name: Create symlink for actions from this repository
+      run: |
+        ln -s ${{ github.action_path }}/../.. .chk-vrs
+      shell: bash
+    
+    - name: Get package file from previous commit
+      run: |
+          git show HEAD^:${{ inputs.package-path }}/package.xml > /tmp/package.xml
+      shell: bash
+    
+    - name: Parse version of previous commit
+      id: parse-base-version
+      uses: ./.chk-vrs/actions/parse-package-xml
+      with:
+        directory: /tmp/
+    
+    - name: Parse version of current commit
+      id: parse-new-version
+      uses: ./.chk-vrs/actions/parse-package-xml
+      with:
+        directory: ${{ inputs.package-path }}
+    
+    - name: Compare versions and set output
+      id: check
+      run: |
+        BASE_VERSION=${{ steps.parse-base-version.outputs.version }}
+        NEW_VERSION=${{ steps.parse-new-version.outputs.version }}
+        if [ "${BASE_VERSION}" = "${NEW_VERSION}" ]; then
+          echo "Version has not changed"
+          echo "changed=false" >> $GITHUB_OUTPUT
+          exit 0
+        fi
+        read base_major base_minor base_patch < <(echo $BASE_VERSION | ( IFS=".$IFS" ; read a b c && echo $a $b $c ))
+        read new_major new_minor new_patch < <(echo $NEW_VERSION | ( IFS=".$IFS" ; read a b c && echo $a $b $c ))
+        if [ "${new_major}" -lt "${base_major}" ]; then
+          echo "::error file=package.xml::The major version has been downgraded"
+          exit 1
+        elif [ "${new_major}" -gt "${base_major}" ]; then
+          echo "Major version increment"
+          if [ ! "${new_minor}" -eq 0 ] || [ ! "${new_patch}" -eq 0 ]; then
+            echo "::error file=package.xml::Expected minor and patch versions to be 0"
+            exit 1
+          fi
+        else
+          if [ "${new_minor}" -lt "${base_minor}" ]; then
+            echo "::error file=package.xml::The minor version has been downgraded"
+            exit 1
+          elif [ "${new_minor}" -gt "${base_minor}" ]; then
+            echo "Minor version increment"
+            if [ ! "${new_patch}" -eq 0 ]; then
+              echo "::error file=package.xml::Expected patch versions to be 0"
+              exit 1
+            fi
+          else
+            if [ "${new_patch}" -lt "${base_patch}" ]; then
+              echo "::error file=package.xml::The patch version has been downgraded"
+              exit 1
+            else
+              echo "Patch version increment"
+            fi
+          fi
+        fi
+        echo "Version has changed"
+        echo "changed=true" >> $GITHUB_OUTPUT
+      shell: bash
