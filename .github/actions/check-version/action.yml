@@ -48,7 +48,7 @@ runs:
     
     - name: Get package file from previous commit
       run: |
-          git show HEAD^:${{ inputs.package-path }}/package.xml > /tmp/package.xml
+          git show HEAD^:${{ inputs.package_path }}/package.xml > /tmp/package.xml
       shell: bash
     
     - name: Parse version of previous commit
@@ -61,7 +61,7 @@ runs:
       id: parse-new-version
       uses: ./.chk-vrs/actions/parse-package-xml
       with:
-        directory: ${{ inputs.package-path }}
+        directory: ${{ inputs.package_path }}
     
     - name: Compare versions and set output
       id: check
