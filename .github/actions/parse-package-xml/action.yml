@@ -14,6 +14,9 @@ outputs:
   version:
     description: "The version extracted from the package.xml"
     value: ${{ steps.parse.outputs.version }}
+  hyphenated_name:
+    description: "Replace underscores in the package name with hyphens"
+    value: ${{ steps.parse.outputs.hyphenated_name }}
 
 runs:
   using: composite
@@ -27,8 +30,11 @@ runs:
       run: |
         NAME="$(xq -x //package/name < '${{ inputs.directory }}/package.xml')"
         VERSION="$(xq -x //package/version < '${{ inputs.directory }}/package.xml')"
+        HYPHENATED_NAME=${NAME//_/-}
         echo "Name: $NAME"
         echo "Version: $VERSION"
         echo "name=$NAME" >> $GITHUB_OUTPUT
         echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "Hyphenated Name: $HYPHENATED_NAME"
+        echo "hyphenated_name=$HYPHENATED_NAME" >> $GITHUB_OUTPUT
       shell: bash
