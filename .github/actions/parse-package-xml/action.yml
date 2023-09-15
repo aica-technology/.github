@@ -15,7 +15,7 @@ outputs:
     description: "The version extracted from the package.xml"
     value: ${{ steps.parse.outputs.version }}
   hyphenated_name:
-    description: "Replace underscores with hyphens in name "
+    description: "Replace underscores in the package name with hyphens"
     value: ${{ steps.parse.outputs.hyphenated_name }}
 
 runs:
