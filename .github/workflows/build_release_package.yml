@@ -1,0 +1,117 @@
+name: Build and release
+
+on: 
+  workflow_call:
+    inputs:
+      package_path:
+        description: 'The path to the package containing the package.xml (for example "./source/package")'
+        required: true
+        type: string
+      image_name:
+        description: 'The name of the image (for example "aica-technology/image-name")'
+        required: true
+        type: string
+      build_context_path:
+        description: "Path to the directory that specifies the Docker build context"
+        required: false
+        type: string
+        default: "."
+      dockerfile_path:
+        description: "Path of the Dockerfile"
+        required: false
+        type: string
+        default: "Dockerfile"
+
+jobs:
+  check-version:
+    name: Check if the version has been updated
+    outputs: 
+      has_changed: ${{ steps.check.outputs.has_changed }}
+      version: ${{ steps.check.outputs.version }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: aica-technology/.github/.github/actions/check-version@v0.10.1
+        with:
+          package_path: ${{ inputs.package_path }}
+        id: check
+
+  metadata:
+    name: Collect metadata
+    needs: check-version
+    runs-on: ubuntu-latest
+    outputs:
+      image_name: ${{ steps.ensure-image.outputs.image_name }}
+      image_tags: ${{ steps.tags.outputs.image_tags }}
+      create_tag: ${{ steps.tags.outputs.create_tag }}
+      git_tag: ${{ steps.tags.outputs.git_tag }}
+    steps:
+      - uses: aica-technology/.github/.github/actions/ghcr-ensure-prefix@v0.6.0
+        id: ensure-image
+        with:
+          image_name: ${{ inputs.image_name }}
+      
+      - run: |
+          CREATE_TAG=false
+          GIT_TAG=""
+          if [ ${{ needs.check-version.outputs.has_changed }} = 'true' ]; then
+            CREATE_TAG=true
+            GIT_TAG="v${{ needs.check-version.outputs.version }}"
+            IMAGE_TAGS=rolling,latest,"${GIT_TAG}"
+          else
+            IMAGE_TAGS=rolling
+          fi
+          echo "Image tags: ${IMAGE_TAGS}"
+          echo "Create tag: ${CREATE_TAG}"
+          echo "Git tag: ${GIT_TAG}"
+          echo "image_tags=${IMAGE_TAGS}" >> $GITHUB_OUTPUT
+          echo "create_tag=${CREATE_TAG}" >> $GITHUB_OUTPUT
+          echo "git_tag=${GIT_TAG}" >> $GITHUB_OUTPUT
+        id: tags
+        shell: bash
+
+  build:
+    needs: metadata
+    strategy:
+      matrix:
+        arch: [ amd64, arm64 ]
+        include:
+          - image: ubuntu-latest
+          - image: buildjet-2vcpu-ubuntu-2204-arm
+            arch: arm64
+
+    runs-on: ${{ matrix.image }}
+    name: Build and publish (${{ matrix.arch }})
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: aica-technology/.github/.github/actions/list-add-suffixes@v0.6.0
+        id: merge-tags
+        with:
+          list: ${{ needs.metadata.outputs.image_tags }}
+          suffixes: ${{ matrix.arch }}
+          glue_separator: "-"
+      
+      - uses: aica-technology/.github/.github/actions/ghcr-build@v0.6.1
+        with:
+         image_name: ${{ needs.metadata.outputs.image_name }}
+         image_tags: ${{ steps.merge-tags.outputs.list }}
+         dockerfile_path: ${{ inputs.dockerfile_path }}
+         build_context_path: ${{ inputs.build_context_path }}
+         token: ${{ secrets.GITHUB_TOKEN }}
+  
+  multi-arch:
+    runs-on: ubuntu-latest
+    name: Merge into a multi-arch image
+    needs: [ metadata, build ]
+    steps:
+      - uses: aica-technology/.github/.github/actions/ghcr-manifest-merge@v0.6.1
+        with:
+          image_name: ${{ needs.metadata.outputs.image_name }}
+          image_tags: ${{ needs.metadata.outputs.image_tags }}
+          archs: amd64,arm64
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - if: needs.metadata.outputs.create_tag == 'true'
+        uses: aica-technology/.github/.github/actions/git-tag@v0.8.1
+        with:
+          tag: ${{ needs.metadata.outputs.git_tag }}
