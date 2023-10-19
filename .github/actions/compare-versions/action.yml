@@ -21,7 +21,7 @@ runs:
     - name: Compare versions and set output
       id: check
       run: |
-        PREV_VERSION="${{ inputs.previous_version }}"
+        BASE_VERSION="${{ inputs.previous_version }}"
         NEW_VERSION="${{ inputs.new_version }}"
         if [ "${BASE_VERSION}" = "${NEW_VERSION}" ]; then
           echo "Version has not changed"
