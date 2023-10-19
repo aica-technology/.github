@@ -1,0 +1,63 @@
+name: Compare versions
+
+inputs:
+  new_version:
+    description: "The new desired version"
+    required: true
+    type: string
+  previous_version:
+    description: "The previous version"
+    required: true
+    type: string
+
+outputs:
+  has_changed:
+    description: "Has the version changed?"
+    value: ${{ steps.check.outputs.changed }}
+
+runs:
+  using: composite
+  steps:    
+    - name: Compare versions and set output
+      id: check
+      run: |
+        PREV_VERSION=${{ inputs.previous_version }}
+        NEW_VERSION=${{ inputs.new_version }}
+        if [ "${BASE_VERSION}" = "${NEW_VERSION}" ]; then
+          echo "Version has not changed"
+          echo "changed=false" >> $GITHUB_OUTPUT
+          exit 0
+        fi
+        read base_major base_minor base_patch < <(echo $BASE_VERSION | ( IFS=".$IFS" ; read a b c && echo $a $b $c ))
+        read new_major new_minor new_patch < <(echo $NEW_VERSION | ( IFS=".$IFS" ; read a b c && echo $a $b $c ))
+        if [ "${new_major}" -lt "${base_major}" ]; then
+          echo "::error file=package.xml::The major version has been downgraded"
+          exit 1
+        elif [ "${new_major}" -gt "${base_major}" ]; then
+          echo "Major version increment"
+          if [ ! "${new_minor}" -eq 0 ] || [ ! "${new_patch}" -eq 0 ]; then
+            echo "::error file=package.xml::Expected minor and patch versions to be 0"
+            exit 1
+          fi
+        else
+          if [ "${new_minor}" -lt "${base_minor}" ]; then
+            echo "::error file=package.xml::The minor version has been downgraded"
+            exit 1
+          elif [ "${new_minor}" -gt "${base_minor}" ]; then
+            echo "Minor version increment"
+            if [ ! "${new_patch}" -eq 0 ]; then
+              echo "::error file=package.xml::Expected patch versions to be 0"
+              exit 1
+            fi
+          else
+            if [ "${new_patch}" -lt "${base_patch}" ]; then
+              echo "::error file=package.xml::The patch version has been downgraded"
+              exit 1
+            else
+              echo "Patch version increment"
+            fi
+          fi
+        fi
+        echo "Version has changed"
+        echo "changed=true" >> $GITHUB_OUTPUT
+      shell: bash
