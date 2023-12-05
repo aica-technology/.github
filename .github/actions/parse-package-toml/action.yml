@@ -1,0 +1,51 @@
+name: Parse data from aica-package.toml
+
+inputs:
+  directory:
+    description: "Where the aica-package.toml is stored"
+    required: false
+    default: .
+    type: string
+
+outputs:
+  name:
+    description: "The name extracted from the aica-package.toml"
+    value: ${{ steps.output.outputs.name }}
+  version:
+    description: "The version extracted from the aica-package.toml"
+    value: ${{ steps.output.outputs.version }}
+  ros_name:
+    description: "The ROS name extracted from the aica-package.toml"
+    value: ${{ steps.output.outputs.ros_name }}
+
+runs:
+  using: composite
+  steps:
+    - name: Get name from aica-package.toml
+      id: name
+      uses: mikefarah/yq@master
+      with:
+        cmd: yq '.metadata.name' ${{ inputs.directory }}/aica-package.toml
+    - name: Get ROS name from aica-package.toml
+      id: ros_name
+      uses: mikefarah/yq@master
+      with:
+        cmd: yq '.metadata.ros-name' ${{ inputs.directory }}/aica-package.toml
+    - name: Get version from aica-package.toml
+      id: version
+      uses: mikefarah/yq@master
+      with:
+        cmd: yq '.metadata.version' ${{ inputs.directory }}/aica-package.toml
+    - name: Prepare output
+      id: output
+      run: |
+        NAME="${{ steps.name.outputs.result }}"
+        VERSION="${{ steps.version.outputs.result }}"
+        ROS_NAME="${{ steps.ros_name.outputs.result }}"
+        echo "Name: $NAME"
+        echo "Version: $VERSION"
+        echo "ROS Name: $ROS_NAME"
+        echo "name=$NAME" >> $GITHUB_OUTPUT
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "ros_name=$ROS_NAME" >> $GITHUB_OUTPUT
+      shell: bash
