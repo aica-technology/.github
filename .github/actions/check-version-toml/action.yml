@@ -1,0 +1,71 @@
+name: Check package version update
+
+inputs:
+  package_path:
+    description: "The path of the directory that contains the aica-package.toml file"
+    required: false
+    type: string
+
+outputs:
+  has_changed:
+    description: "Has the package version changed?"
+    value: ${{ steps.check.outputs.has_changed }}
+  version:
+    description: "The current version of the package"
+    value: ${{ steps.parse-new-version.outputs.version }}
+
+runs:
+  using: composite
+  steps:
+    - name: Checkout test
+      id: checkout-test
+      run: |
+        GIT_CHECKOUT=false
+        if [ ! -d .git ]; then
+          GIT_CHECKOUT=true
+        else
+          git fetch --depth 2
+        fi
+        echo "Git checkout: $GIT_CHECKOUT"
+        echo "checkout=$GIT_CHECKOUT" >> $GITHUB_OUTPUT
+      shell: bash
+
+    - name: Checkout repository
+      if: steps.checkout-test.outputs.checkout == 'true'
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 2
+
+    # When using a composite action from another repo,
+    # there is no canonical way to call other composite actions from that same repo
+    # so we make a symlink to the repo's .github folder so that local `uses: ./` can work
+    # Note: using ${{ github.action_path }} in a `uses:` does not work
+    # as the variable doesn't exist when GitHub resolves it
+    - name: Create symlink for actions from this repository
+      run: |
+        ln -s ${{ github.action_path }}/../.. .chk-vrs-toml
+      shell: bash
+
+    - name: Get package file from previous commit
+      run: |
+        git show HEAD^:${{ inputs.package_path }}/aica-package.toml > /tmp/aica-package.toml
+      shell: bash
+
+    - name: Parse version of previous commit
+      id: parse-base-version
+      uses: ./.chk-vrs-toml/actions/parse-package-toml
+      with:
+        directory: /tmp/
+
+    - name: Parse version of current commit
+      id: parse-new-version
+      uses: ./.chk-vrs-toml/actions/parse-package-toml
+      with:
+        directory: ${{ inputs.package_path }}
+
+    - name: Compare versions
+      id: check
+      uses: ./.chk-vrs-toml/actions/compare-versions
+      with:
+        previous_version: ${{ steps.parse-base-version.outputs.version }}
+        new_version: ${{ steps.parse-new-version.outputs.version }}
