@@ -55,7 +55,7 @@ runs:
       id: parse-base-version
       uses: ./.chk-vrs-toml/actions/parse-package-toml
       with:
-        directory: /tmp/
+        directory: /tmp
 
     - name: Parse version of current commit
       id: parse-new-version
