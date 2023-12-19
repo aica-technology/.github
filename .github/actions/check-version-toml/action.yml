@@ -48,14 +48,12 @@ runs:
 
     - name: Get package file from previous commit
       run: |
-        git show HEAD^:${{ inputs.package_path }}/aica-package.toml > /tmp/aica-package.toml
+        git show HEAD^:${{ inputs.package_path }}/aica-package.toml > aica-package.toml
       shell: bash
 
     - name: Parse version of previous commit
       id: parse-base-version
       uses: ./.chk-vrs-toml/actions/parse-package-toml
-      with:
-        directory: /tmp
 
     - name: Parse version of current commit
       id: parse-new-version
