@@ -10,38 +10,36 @@ inputs:
 outputs:
   name:
     description: "The name extracted from the aica-package.toml"
-    value: ${{ steps.output.outputs.name }}
+    value: ${{ steps.metadata.outputs.name }}
   version:
     description: "The version extracted from the aica-package.toml"
-    value: ${{ steps.output.outputs.version }}
+    value: ${{ steps.metadata.outputs.version }}
   ros_name:
     description: "The ROS name extracted from the aica-package.toml"
-    value: ${{ steps.output.outputs.ros_name }}
+    value: ${{ steps.metadata.outputs.ros_name }}
 
 runs:
   using: composite
   steps:
-    - name: Get name from aica-package.toml
-      id: name
-      uses: mikefarah/yq@master
-      with:
-        cmd: yq '.metadata.name' ${{ inputs.directory }}/aica-package.toml
-    - name: Get ROS name from aica-package.toml
-      id: ros_name
-      uses: mikefarah/yq@master
-      with:
-        cmd: yq '.metadata.ros-name' ${{ inputs.directory }}/aica-package.toml
-    - name: Get version from aica-package.toml
-      id: version
-      uses: mikefarah/yq@master
-      with:
-        cmd: yq '.metadata.version' ${{ inputs.directory }}/aica-package.toml
-    - name: Prepare output
-      id: output
+    - name: Install yq
       run: |
-        NAME="${{ steps.name.outputs.result }}"
-        VERSION="${{ steps.version.outputs.result }}"
-        ROS_NAME="${{ steps.ros_name.outputs.result }}"
+        if [ -x "$(command -v yq)" ]; then
+          echo "yq already installed"
+          exit 0
+        fi
+
+        VERSION=v4.40.5
+        BINARY=yq_linux_amd64
+        wget https://github.com/mikefarah/yq/releases/download/${VERSION}/${BINARY}.tar.gz -O - |\
+          tar xz && mv ${BINARY} /usr/bin/yq
+      shell: bash
+    - name: Get metadata from aica-package.toml
+      id: metadata
+      run: |
+        INPUT="${{ inputs.directory }}/aica-package.toml"
+        NAME=$(yq '.metadata.name' $INPUT)
+        ROS_NAME=$(yq '.metadata.ros-name' $INPUT)
+        VERSION=$(yq '.metadata.version' $INPUT)
         echo "Name: $NAME"
         echo "Version: $VERSION"
         echo "ROS Name: $ROS_NAME"
