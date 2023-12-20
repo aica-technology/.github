@@ -46,3 +46,4 @@ runs:
         echo "name=$NAME" >> $GITHUB_OUTPUT
         echo "version=$VERSION" >> $GITHUB_OUTPUT
         echo "ros_name=$ROS_NAME" >> $GITHUB_OUTPUT
+      shell: bash
