@@ -65,15 +65,38 @@ However, there are several reasons to prefer a manually curated changelog:
 The changelog should be a `CHANGELOG.md` markdown file at the top level of the package. It should start with
 a `# CHANGELOG` heading, optionally followed by a table of `Versions:` linking to subheadings.
 
+### Changelog entries during development
+
 Changes between releases should be tracked in a special subheading with the name `## Upcoming changes (in development)`.
-The changes can be grouped in a list and formatted as conventional commit subjects. Generally speaking, the link to the
-related PR should give all the necessary context for the change at release time.
+
+A changelog entry should be a list item (starting with `-`) and formatted as a conventional commit subject. The entry
+should end with the **parent issue number** in parentheses (e.g. `#99`). If there is no parent issue, the PR number can
+be used instead.
+
+```
+- feat: add a spin animation on button click (#99)
+```
+
+The list of entries should generally be ordered from oldest to newest; new entries are added to the end of the list.
 
 When editing the changelog as part of a PR, it is permitted and encouraged to group or rewrite previous sections to
 improve clarity, with the goal to make it as easy as possible to write clear and concise release notes in future.
 
 Consider that the changelog must be updated before the PR is approved and merged; an approved change entry can then be
 re-used as the commit message when closing the PR.
+
+### Updating the changelog for release
+
+When making a release, the changelog entries under the `## Upcoming changes` section should be moved to a new section
+titled with the corresponding release version (e.g. `## 1.1.0`). The section should start with a high-level summary of
+the release to highlight the key changes to the previous version.
+
+The changelog entries can be divided into different subheadings to separate features from fixes. The entries can be also
+re-ordered or re-grouped as necessary to keep releated changes together. For example, if one change entry adds a feature
+and then another extends it, those changes can be combined as one new feature in the release notes. Similarly, if a later
+change entry completely reverts a previous change entry, the two entries can be dropped from the release notes.
+
+The overall goal is to maximize readability and clarity of the release notes.
 
 ## Changelog example
 
@@ -88,9 +111,9 @@ Versions:
 
 ## Upcoming changes (in development)
 
-- feat: add persistent position for on_start (#357, #358)
-- fix: remove duplicate edges when moving the node around (#342)
 - fix: update on_start in editor when the graph changes (#339)
+- fix: remove duplicate edges when moving the node around (#342)
+- feat: add persistent position for on_start (#357, #358)
 
 ## 1.1.0
 
