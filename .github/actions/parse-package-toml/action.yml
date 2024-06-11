@@ -37,8 +37,8 @@ runs:
       id: metadata
       run: |
         INPUT="${{ inputs.directory }}/aica-package.toml"
-        NAME=$(yq '.metadata.name' $INPUT)
-        ROS_NAME=$(yq '.metadata.ros-name' $INPUT)
+        NAME=$(yq '.metadata.collection.name' $INPUT)
+        ROS_NAME=$(yq '.metadata.collection.ros-name' $INPUT)
         VERSION=$(yq '.metadata.version' $INPUT)
         echo "Name: $NAME"
         echo "Version: $VERSION"
