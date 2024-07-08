@@ -23,7 +23,8 @@ runs:
         python-version: "3.10"
     - run: pip install semver==3.0.2
       shell: bash
-    - run: |
+    - id: check
+      run: |
         RESULT=$(pysemver compare ${{ inputs.new_version }} ${{ inputs.previous_version }})
         if [ "$?" -ne 0 ]; then
           echo "::error::Version is not a valid SemVer string"
