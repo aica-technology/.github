@@ -29,32 +29,62 @@ runs:
           exit 0
         fi
         read base_major base_minor base_patch < <(echo $BASE_VERSION | ( IFS=".$IFS" ; read a b c && echo $a $b $c ))
+        read base_patch base_rc < <(echo $base_patch | (IFS="-rc" ; read a b && echo $a $b ))
         read new_major new_minor new_patch < <(echo $NEW_VERSION | ( IFS=".$IFS" ; read a b c && echo $a $b $c ))
+        read new_patch new_rc < <(echo $new_patch | (IFS="-rc" ; read a b && echo $a $b ))
         if [ "${new_major}" -lt "${base_major}" ]; then
-          echo "::error file=package.xml::The major version has been downgraded"
+          echo "::error ::The major version has been downgraded"
           exit 1
         elif [ "${new_major}" -gt "${base_major}" ]; then
           echo "Major version increment"
           if [ ! "${new_minor}" -eq 0 ] || [ ! "${new_patch}" -eq 0 ]; then
-            echo "::error file=package.xml::Expected minor and patch versions to be 0"
+            echo "::error ::Expected minor and patch versions to be 0"
             exit 1
           fi
         else
           if [ "${new_minor}" -lt "${base_minor}" ]; then
-            echo "::error file=package.xml::The minor version has been downgraded"
+            echo "::error ::The minor version has been downgraded"
             exit 1
           elif [ "${new_minor}" -gt "${base_minor}" ]; then
             echo "Minor version increment"
             if [ ! "${new_patch}" -eq 0 ]; then
-              echo "::error file=package.xml::Expected patch versions to be 0"
+              echo "::error ::Expected patch versions to be 0"
               exit 1
             fi
           else
             if [ "${new_patch}" -lt "${base_patch}" ]; then
-              echo "::error file=package.xml::The patch version has been downgraded"
+              echo "::error ::The patch version has been downgraded"
               exit 1
-            else
-              echo "Patch version increment"
+            fi
+            if [ -z "${base_rc}" ] && [ ! -z "${new_rc}" ]; then
+              # new release candidate
+              if [ "${new_patch}" -eq "${base_patch}" ]; then
+                echo "::error ::The patch version has to increment for a release candidate"
+                exit 1
+              elif [ "${new_rc}" -ne 1 ]; then
+                echo "::error ::Expected first release candidate to be number 1"
+                exit 1
+              else
+                echo "New initial release candiate"
+              fi
+            elif [ ! -z "${base_rc}" ] && [ ! -z "${new_rc}" ]; then
+              # updated release candidate
+              if [ "${new_patch}" -ne "${base_patch}" ]; then
+                echo "::error ::Expected no patch version change"
+                exit 1
+              elif [ "${new_rc}" -le "${base_rc}" ]; then
+                echo "::error ::Expected release candidate version increment"
+                exit 1
+              else
+                echo "New updated release candidate"
+              fi
+            elif [ ! -z "${base_rc}" ] && [ -z "${new_rc}" ]; then
+              if [ "${new_patch}" -ne "${base_patch}" ]; then
+                echo "::error ::Expected no patch version change"
+                exit 1
+              else
+                echo "Committing to release candidate"
+              fi
             fi
           fi
         fi
