@@ -48,7 +48,7 @@ runs:
 
     - name: Get package file from previous commit
       run: |
-        git show HEAD^:${{ inputs.package_path }}/aica-package.toml > /tmp/aica-package.toml || echo '[metadata]\nversion="0.0.0"' > /tmp/aica-package.toml
+        git show HEAD^:${{ inputs.package_path }}/aica-package.toml > /tmp/aica-package.toml || printf '[metadata]\nversion="0.0.0"' > /tmp/aica-package.toml
       shell: bash
 
     - name: Parse version of previous commit
