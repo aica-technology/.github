@@ -1,7 +1,14 @@
-﻿name: "Dependabot: Update bun.lockb"
+﻿name: "Update bun.lockb"
 
-permissions:
-  contents: write
+inputs:
+  user:
+    description: "The user to use for the commit"
+    required: true
+    type: string
+  ref:
+    description: "The ref to pull and force push"
+    required: true
+    type: string
 
 runs:
   using: composite
@@ -9,14 +16,14 @@ runs:
     - uses: actions/checkout@v4
       with:
         fetch-depth: 0
-        ref: ${{ github.event.pull_request.head.ref }}
+        ref: ${{ inputs.ref }}
     - name: Install dependencies
       run: |
         bun install
     - name: Update bun.lockb
       run: |
         git add bun.lockb
-        git config --global user.name 'dependabot[bot]'
-        git config --global user.email 'dependabot[bot]@users.noreply.github.com'
+        git config --global user.name '${{ inputs.user }}'
+        git config --global user.email '${{ inputs.user }}@users.noreply.github.com'
         git commit --amend --no-edit
         git push --force
