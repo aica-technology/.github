@@ -1,0 +1,29 @@
+﻿name: "Update bun.lockb"
+
+inputs:
+  user:
+    description: "The user to use for the commit"
+    required: true
+    type: string
+  ref:
+    description: "The ref to pull and force push"
+    required: true
+    type: string
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        ref: ${{ inputs.ref }}
+    - name: Install dependencies
+      run: |
+        bun install
+    - name: Update bun.lockb
+      run: |
+        git add bun.lockb
+        git config --global user.name '${{ inputs.user }}'
+        git config --global user.email '${{ inputs.user }}@users.noreply.github.com'
+        git commit --amend --no-edit
+        git push --force
