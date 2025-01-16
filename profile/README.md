@@ -1,6 +1,4 @@
-## AICA Technology
-
-This is the home of the AICA robotics framework 🦾 
+## Welcome to the home of the AICA System 🦾 
 
 Developer documentation is available at 💻 **[docs.aica.tech](https://docs.aica.tech)** 💻
 
