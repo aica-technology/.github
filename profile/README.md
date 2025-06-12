@@ -1,23 +1,21 @@
 ## Welcome to AICA's GitHub!
-
 This is the home of the AICA System 🦾 
 
-### [docs.aica.tech](https://docs.aica.tech) 💻
-Developer documentation
+### Developer Documentation 💻
+Reference developer documentation for AICA System users at [docs.aica.tech](https://docs.aica.tech) 
 
-### [AICA Community](https://github.com/aica-technology/community)💡
-AICA's Public Roadmap and Feedback Tracker — a transparent, collaborative space where users can see what's coming, get involved, and help shape the future of the AICA System
-
-### [AICA Discussions](https://github.com/orgs/aica-technology/discussions)💬
-The hub for release announcements and more Q&A style threads for users to share examples and questions
+### AICA Community & Discussions💡
+Engage with other users, ask questions, and see what's next.
+- [AICA Community](https://github.com/aica-technology/community): View the public roadmap and provide feedback
+- [AICA Discussions](https://github.com/orgs/aica-technology/discussions): Read release announcements and join Q&A threads
 
 ### Useful repositories
 
-- AICA API: https://github.com/aica-technology/api
+- [AICA API](https://github.com/aica-technology/api): AICA API resources
 
-- Component SDK: https://github.com/aica-technology/component-template
+- [Component SDK](https://github.com/aica-technology/component-template): A SDK for creating custom components for AICA applications
 
-- Docker Images: https://github.com/aica-technology/docker-images
+- [Docker Images](https://github.com/aica-technology/docker-images): Docker images and tools for ROS and AICA
 
 ---
 
