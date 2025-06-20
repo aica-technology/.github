@@ -1,18 +1,23 @@
-## AICA Technology
+# Welcome to AICA's GitHub!
 
-This is the home of the AICA robotics framework 🦾 
+This is the home of the AICA System 🦾 
 
-Developer documentation is available at 💻 **[docs.aica.tech](https://docs.aica.tech)** 💻
+## Developer Documentation 💻
 
-Submit bug reports, feature requests or questions using our 💡 **[issue form](https://github.com/aica-technology/api/issues/new/choose)** 💡
+Reference developer documentation for AICA System users at [docs.aica.tech](https://docs.aica.tech) 
 
-### Useful repositories
+## AICA Community & Discussions💡
 
-- AICA API: https://github.com/aica-technology/api
+Engage with other users, ask questions, and see what's next.
 
-- Component SDK: https://github.com/aica-technology/component-template
+- [AICA Community](https://github.com/aica-technology/community): View the public roadmap and provide feedback
+- [AICA Discussions](https://github.com/orgs/aica-technology/discussions): Read release announcements and join Q&A threads
 
-- Docker Images: https://github.com/aica-technology/docker-images
+## Useful repositories
+
+- [AICA API](https://github.com/aica-technology/api): AICA API resources
+- [Component SDK](https://github.com/aica-technology/component-template): A SDK for creating custom components for AICA applications
+- [Docker Images](https://github.com/aica-technology/docker-images): Docker images and tools for ROS and AICA
 
 ---
 
