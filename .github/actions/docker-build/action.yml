@@ -38,9 +38,9 @@ runs:
       shell: bash
 
     - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v2
+      uses: docker/setup-buildx-action@v3
       with:
-        version: v0.10.4 # due to --provenance
+        version: v0.27.1
 
     - uses: ./.gha-db/actions/list-add-suffixes
       id: calculate-images
