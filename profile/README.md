@@ -1,9 +1,9 @@
+> [!IMPORTANT]
+> This organization and its content are not affiliated, associated, authorized, endorsed by, or in any way officially connected with aicas GmbH, Karlsruhe, Germany (www.aicas.com and https://github.com/aicas). Any references to “AICA” are strictly historic.
+
 # The home of adaptive and intelligent control applications
 
 This repository contains public code, tools and documentation for robotics and AI services.
-
-> [!IMPORTANT]
-> This organization and its content are not affiliated, associated, authorized, endorsed by, or in any way officially connected with aicas GmbH, Karlsruhe, Germany (www.aicas.com and https://github.com/aicas). Any references to “AICA” are strictly historic.
 
 ## Developer Documentation 💻
 
